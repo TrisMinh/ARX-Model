@@ -63,6 +63,7 @@ def build(df_in, na, nb, nk):
         for u in Us:
             for lag in range(nk, nk + nb):
                 row.append(u[t_i - lag])
+        row.append(1.0)
         rows.append(row)
     return np.array(rows), y_v[max_lag:]
 
