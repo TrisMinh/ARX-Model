@@ -1,8 +1,8 @@
 # ARX Model – Greenhouse Soil Moisture Prediction
 ## Tài liệu kỹ thuật đầy đủ (Full Technical Documentation)
 
-**Phiên bản:** 1.0  
-**Ngày:** 2026-03-20  
+**Phiên bản:** 1.1  
+**Ngày:** 2026-03-23  
 **Đối tượng:** Kỹ sư điều khiển, Data Scientist, Nghiên cứu sinh
 
 ---
@@ -27,6 +27,36 @@
 16. [Phân tích phần dư (Residual Analysis)](#16-phân-tích-phần-dư-residual-analysis)
 17. [Hạn chế và mở rộng](#17-hạn-chế-và-mở-rộng)
 18. [Tài liệu tham khảo](#18-tài-liệu-tham-khảo)
+
+---
+
+## Cách đọc nhanh
+
+| Nếu bạn muốn... | Nên đọc phần |
+|---|---|
+| Hiểu nhanh bài toán và mô hình | Mục 1, 3, 4, 5 |
+| Nắm công thức và cách ước lượng | Mục 6, 7, 8, 9 |
+| Biết cách đánh giá mô hình | Mục 10, 11, 16 |
+| Chuẩn bị dữ liệu cho đúng | Mục 12, 13 |
+| Chạy code Python ngay | Mục 14 |
+| Chọn lại bậc mô hình | Mục 15 |
+| Biết giới hạn của ARX | Mục 17 |
+
+## Ký hiệu cốt lõi
+
+| Ký hiệu | Ý nghĩa | Ghi chú |
+|---|---|---|
+| `y(t)` | Soil Moisture tại thời điểm `t` | Output chính |
+| `u(t)` | Vector input ngoại sinh | Gồm `Temp`, `Humidity`, `Light`, `Drip`, `Mist`, `Fan` |
+| `na` | Số lag của output | Bậc AR |
+| `nb` | Số lag của mỗi input | Bậc động học input |
+| `nk` | Số bước trễ input | Input delay |
+| `T_s` | Sampling period | Đơn vị giây |
+| `φ(t)` | Regression vector | Chứa các giá trị trễ |
+| `θ` | Vector tham số mô hình | Cần được ước lượng |
+| `X`, `Y` | Ma trận hồi quy và vector đầu ra | Dùng cho Least Squares |
+
+> **Tóm tắt một dòng:** tài liệu này đi từ ý nghĩa vật lý của bài toán nhà kính, đến công thức ARX(2,2,1), rồi kết thúc bằng pipeline Python có thể chạy trực tiếp.
 
 ---
 
@@ -175,6 +205,25 @@ Cần xác định T_s (giây) phù hợp với hệ thống. Gợi ý:
 - T_s = 300s (5 phút): phù hợp cho hệ thống lớn hơn
 
 > **Quan trọng:** nk = 1 tương đương độ trễ = 1 × T_s. Nếu T_s = 5 phút, thì input ảnh hưởng sau 5 phút.
+
+### 4.3 Ghi chú thực tế về độ trễ
+
+Trong vận hành nhà kính thực tế, **không phải mọi input đều có cùng độ trễ vật lý**:
+
+- `Fan` và `Mist` thường ảnh hưởng lên `Temperature/Humidity` gần như tức thời hoặc sau vài phút
+- `Drip` thường ảnh hưởng lên cảm biến `Soil Moisture` **chậm hơn**, do còn thời gian thấm, lan tỏa và vị trí đặt cảm biến
+- `Light` và `Temperature` tác động lên quá trình mất nước thường mang tính tích lũy, không phải một xung duy nhất
+
+Vì vậy:
+
+- `ARX(2,2,1)` phù hợp như **baseline model** khi muốn mô hình đơn giản, dễ ước lượng
+- Nếu `T_s = 300s` và cảm biến đất đặt xa đầu tưới, `nk = 1` có thể **quá ngắn** cho kênh `Drip`
+- Trong bài toán triển khai thật, nên cân nhắc:
+  - tăng `nk`
+  - tăng `nb`
+  - hoặc dùng **delay khác nhau cho từng input** nếu framework cho phép
+
+> **Khuyến nghị thực tế:** với tín hiệu tưới nhỏ giọt, hãy ước lượng delay từ dữ liệu thật bằng cross-correlation hoặc test step-response trước khi cố định `nk`.
 
 ---
 
@@ -507,7 +556,7 @@ Fold 2: Train [1..T₂]    → Test [T₂+1..T₂+h]
 - [ ] Xác định sampling period T_s (phút)
 - [ ] Đảm bảo tất cả sensors hoạt động đồng bộ
 - [ ] Lưu timestamp cho mỗi mẫu
-- [ ] Thu thập dữ liệu trong toàn bộ điều kiện vận hành (ngày/đêm, mùa khô/ưa)
+- [ ] Thu thập dữ liệu trong toàn bộ điều kiện vận hành (ngày/đêm, mùa khô/mưa)
 
 ### 13.2 Data Cleaning
 
@@ -554,6 +603,30 @@ cond = np.linalg.cond(X.T @ X)
 print(f"Condition number: {cond:.2f} (nên < 1000)")
 ```
 
+### 13.5 Checklist cho dữ liệu synthetic "giống thực tế"
+
+Nếu chưa có dữ liệu thực và phải sinh dữ liệu giả để kiểm thử pipeline, nên đảm bảo các nguyên tắc sau:
+
+- Có **ngưỡng điều khiển** rõ ràng cho `Soil Moisture` thay vì bật/tắt actuator hoàn toàn ngẫu nhiên
+- Dùng **hysteresis** (`low_sp`, `high_sp`) để tránh bật/tắt liên tục quanh một ngưỡng duy nhất
+- Có **dwell time / minimum on-off time** cho `Drip`, `Mist`, `Fan`
+- Có **chu kỳ ngày/đêm** cho `Light`, `Temperature`, `Humidity`
+- Có **quán tính** của `Soil Moisture`: đất không tăng/giảm quá mạnh trong 1 mẫu
+- `Drip` phải có tác động **mạnh nhưng trễ**, `Mist` tác động **gián tiếp**, `Fan` tác động **làm khô**
+- Giữ giá trị trong **range hợp lý**:
+  - `Soil Moisture`: thường 10-100%
+  - `Temperature`: thường 10-50 °C trong mô phỏng nhà kính
+  - `Humidity`: 20-100%
+  - `Light`: 0-1500 lux hoặc dải phù hợp với loại cảm biến đang mô phỏng
+- Hạn chế `manual override` ngẫu nhiên; nếu có thì tần suất phải thấp và nên vẫn tôn trọng ràng buộc an toàn
+- Bộ ngưỡng nên gắn với:
+  - loại cây
+  - giai đoạn sinh trưởng
+  - loại giá thể/đất
+  - khí hậu địa phương
+
+> **Lưu ý:** dữ liệu synthetic chỉ nên dùng để kiểm thử thuật toán, debug pipeline và kiểm tra tính đúng của code. Không nên dùng làm bằng chứng duy nhất rằng mô hình sẽ hoạt động tốt ngoài thực địa.
+
 ---
 
 ## 14. Hướng dẫn triển khai Python
@@ -564,7 +637,46 @@ print(f"Condition number: {cond:.2f} (nên < 1000)")
 pip install numpy pandas scikit-learn matplotlib scipy
 ```
 
-### 14.2 Code đầy đủ ARX(2,2,1)
+### 14.2 Cách dùng nhanh
+
+Nếu bạn chỉ muốn chạy pipeline nhanh, thứ tự nên là:
+
+1. Chuẩn bị `greenhouse_data.csv` theo format ở mục 14.5
+2. Đọc dữ liệu bằng `load_greenhouse_data()`
+3. Tạo ma trận hồi quy bằng `build_regression_matrix()`
+4. Ước lượng tham số bằng `estimate_arx_ls()`
+5. Chạy toàn bộ quy trình bằng `run_arx_pipeline()`
+6. Xem metrics và file `arx_results.png`
+
+**Đầu vào tối thiểu:**
+
+- `Timestamp`
+- `Soil_Moisture`
+- `Temperature`
+- `Humidity`
+- `Light`
+- `Drip`
+- `Mist`
+- `Fan`
+
+**Đầu ra chính của pipeline:**
+
+- `theta`: vector tham số ước lượng
+- `train_metrics`, `val_metrics`: các chỉ số đánh giá
+- `arx_results.png`: biểu đồ dự đoán và phần dư
+
+### 14.3 Code đầy đủ ARX(2,2,1)
+
+Trước khi xem code, đây là vai trò của từng hàm:
+
+| Hàm | Vai trò |
+|---|---|
+| `load_greenhouse_data()` | Đọc và sắp xếp dữ liệu theo thời gian |
+| `build_regression_matrix()` | Tạo ma trận đặc trưng từ các lag |
+| `estimate_arx_ls()` | Ước lượng tham số bằng Least Squares |
+| `compute_metrics()` | Tính RMSE, MAE, Fit%, R² |
+| `run_arx_pipeline()` | Ghép toàn bộ quy trình train/validation |
+| `plot_results()` | Vẽ đồ thị đầu ra, dự đoán, residuals |
 
 ```python
 import numpy as np
@@ -820,46 +932,117 @@ if __name__ == "__main__":
     )
 ```
 
-### 14.3 Tạo dữ liệu giả để kiểm tra
+### 14.4 Tạo dữ liệu giả để kiểm tra
 
 ```python
 def generate_synthetic_data(N=2000, T_s=60, seed=42):
     """
-    Tạo dữ liệu nhà kính tổng hợp để kiểm tra code.
+    Tạo dữ liệu tổng hợp theo logic nhà kính:
+    - Có chu kỳ ngày/đêm
+    - Có ngưỡng low/high cho Soil Moisture
+    - Có hysteresis và dwell time
+    - Có tác động trễ của actuator lên đất
+
+    Mục đích: kiểm tra pipeline ARX.
+    Không thay thế cho dữ liệu đo thực tế.
     """
     np.random.seed(seed)
-    
+
     t = np.arange(N)
-    
-    # True parameters (giá trị thực)
-    a1, a2 = 0.85, -0.05
-    b_drip = 0.30   # hệ số tưới cao nhất
-    b_temp = -0.02  # nhiệt độ làm giảm moisture
-    
-    # Generate inputs
-    Temp     = 25 + 5*np.sin(2*np.pi*t/(24*60/T_s)) + np.random.normal(0, 1, N)
-    Humidity = 70 + 15*np.sin(2*np.pi*t/(24*60/T_s) + np.pi) + np.random.normal(0, 2, N)
-    Light    = np.maximum(0, 1000*np.sin(np.pi*t/(12*60/T_s) - 0.3) + np.random.normal(0, 50, N))
-    Drip     = (np.random.random(N) > 0.85).astype(float)   # 15% thời gian tưới
-    Mist     = (np.random.random(N) > 0.90).astype(float)   # 10% thời gian phun
-    Fan      = (np.random.random(N) > 0.70).astype(float)   # 30% thời gian bật quạt
-    
-    # Generate output with known dynamics
+
+    samples_per_day = int(24 * 3600 / T_s)
+    hour = (t % samples_per_day) / samples_per_day * 24
+
+    # Môi trường nền
+    light_base = np.maximum(0, np.sin((hour - 6) / 12 * np.pi))
+    Light = np.where(
+        (hour >= 6) & (hour <= 18),
+        1000 * light_base + np.random.normal(0, 30, N),
+        np.random.normal(10, 5, N)
+    )
+    Light = np.clip(Light, 0, 1500)
+
+    temp_phase = (hour - 14) / 24 * 2 * np.pi
+    Temp = 26 + 6*np.cos(temp_phase) + np.random.normal(0, 0.8, N)
+    Humidity = 72 - 12*np.cos(temp_phase) + np.random.normal(0, 2.0, N)
+    Humidity = np.clip(Humidity, 30, 100)
+
+    # Actuator states
+    Drip = np.zeros(N)
+    Mist = np.zeros(N)
+    Fan = np.zeros(N)
+
+    # Output: Soil Moisture
     y = np.zeros(N)
-    y[0] = 65.0   # initial soil moisture (%)
+    y[0] = 65.0
     y[1] = 64.8
-    
+
+    low_sp = 58.0
+    high_sp = 70.0
+    min_switch_steps = max(2, int(round(600 / T_s)))  # tối thiểu 10 phút
+    last_drip_switch = 0
+    low_count = 0
+
+    # True parameters: giữ độ lớn hợp lý, không để đất nhảy quá mạnh sau 1 mẫu
+    a1, a2 = 0.92, 0.03
+    b_temp_1, b_temp_2 = -0.010, -0.004
+    b_humi_1, b_humi_2 =  0.004,  0.002
+    b_light_1, b_light_2 = -0.0007, -0.0003
+    b_drip_1, b_drip_2 =  0.8, 1.6      # tác động kéo dài, mẫu sau mạnh hơn mẫu đầu
+    b_mist_1, b_mist_2 =  0.08, 0.05
+    b_fan_1, b_fan_2 =  -0.05, -0.02
+
     for i in range(2, N):
-        y[i] = (a1 * y[i-1] + a2 * y[i-2]
-                + b_temp   * Temp[i-1]
-                - 0.01     * Humidity[i-1]
-                - 0.0001   * Light[i-1]
-                + b_drip   * Drip[i-1]
-                + 0.05     * Mist[i-1]
-                - 0.02     * Fan[i-1]
-                + np.random.normal(0, 0.3))
-        y[i] = np.clip(y[i], 0, 100)
-    
+        # 1. Luật điều khiển
+        low_count = low_count + 1 if y[i-1] < low_sp else 0
+        drip_can_switch = (i - last_drip_switch) >= min_switch_steps
+
+        if Drip[i-1] < 0.5:
+            if low_count >= 2 and drip_can_switch:
+                Drip[i] = 1.0
+                last_drip_switch = i
+            else:
+                Drip[i] = 0.0
+        else:
+            if y[i-1] >= high_sp and drip_can_switch:
+                Drip[i] = 0.0
+                last_drip_switch = i
+            else:
+                Drip[i] = 1.0
+
+        if Temp[i-1] > 32 or Humidity[i-1] > 90:
+            Fan[i] = 1.0
+        elif Temp[i-1] < 28 and Humidity[i-1] < 85:
+            Fan[i] = 0.0
+        else:
+            Fan[i] = Fan[i-1]
+
+        if Temp[i-1] > 30 and Humidity[i-1] < 55:
+            Mist[i] = 1.0
+        elif Temp[i-1] < 27 or Humidity[i-1] > 65:
+            Mist[i] = 0.0
+        else:
+            Mist[i] = Mist[i-1]
+
+        # 2. Actuator ảnh hưởng môi trường
+        Temp[i] -= 2.0 * Fan[i] + 2.5 * Mist[i]
+        Humidity[i] += 14.0 * Mist[i] - 5.0 * Fan[i]
+        Temp[i] = np.clip(Temp[i], 10, 50)
+        Humidity[i] = np.clip(Humidity[i], 20, 100)
+
+        # 3. ARX(2,2,1): mỗi input dùng 2 lag
+        y[i] = (
+            a1 * y[i-1] + a2 * y[i-2]
+            + b_temp_1  * Temp[i-1]     + b_temp_2  * Temp[i-2]
+            + b_humi_1  * Humidity[i-1] + b_humi_2  * Humidity[i-2]
+            + b_light_1 * Light[i-1]    + b_light_2 * Light[i-2]
+            + b_drip_1  * Drip[i-1]     + b_drip_2  * Drip[i-2]
+            + b_mist_1  * Mist[i-1]     + b_mist_2  * Mist[i-2]
+            + b_fan_1   * Fan[i-1]      + b_fan_2   * Fan[i-2]
+            + np.random.normal(0, 0.15)
+        )
+        y[i] = np.clip(y[i], 10, 100)
+
     # Create DataFrame
     import pandas as pd
     df = pd.DataFrame({
@@ -883,7 +1066,17 @@ def generate_synthetic_data(N=2000, T_s=60, seed=42):
 # theta, train_m, val_m = run_arx_pipeline('greenhouse_data.csv')
 ```
 
-### 14.4 Format CSV yêu cầu
+**Giải thích thêm cho ví dụ trên:**
+
+- Mục tiêu của đoạn code là tạo dữ liệu **hợp lý về mặt điều khiển**, không phải mô phỏng vật lý đầy đủ
+- `Drip` không còn bật/tắt ngẫu nhiên hoàn toàn, mà bám theo `low_sp/high_sp`
+- `Humidity` có hệ số **dương** trong phương trình ARX vì không khí ẩm hơn thường làm giảm tốc độ bay hơi của đất
+- `Drip` được mô tả với ảnh hưởng ở cả `t-1` và `t-2`, trong đó `t-2` có thể mạnh hơn để phản ánh thời gian thấm
+- Nếu hệ thống thực tế cho thấy tưới có độ trễ dài hơn, hãy tăng `nk` hoặc chuyển sang cấu trúc linh hoạt hơn thay vì cố ép vào `ARX(2,2,1)`
+
+### 14.5 Format CSV yêu cầu
+
+**Tối thiểu cho pipeline ARX:**
 
 ```csv
 Timestamp,Soil_Moisture,Temperature,Humidity,Light,Drip,Mist,Fan
@@ -892,6 +1085,21 @@ Timestamp,Soil_Moisture,Temperature,Humidity,Light,Drip,Mist,Fan
 2025-01-01 00:02:00,65.0,24.3,71.9,0,1,0,0
 ...
 ```
+
+**Có thể mở rộng thêm các cột metadata nếu cần phân tích vận hành:**
+
+```csv
+Timestamp,Month,Season,Soil_Moisture,Soil_Low_SP,Soil_High_SP,Temperature,Humidity,Light,Drip,Mist,Fan
+2025-03-01 00:00:00,3,spring,65.2,58.0,70.0,24.1,72.3,0,0,0,1
+2025-03-01 00:01:00,3,spring,65.0,58.0,70.0,24.3,71.9,0,1,0,0
+...
+```
+
+Các cột như `Month`, `Season`, `Soil_Low_SP`, `Soil_High_SP` không bắt buộc cho ARX cơ bản, nhưng rất hữu ích để:
+
+- kiểm tra logic điều khiển
+- giải thích hành vi bật/tắt actuator
+- phân tích theo mùa vụ hoặc theo setpoint
 
 ---
 
@@ -1014,6 +1222,7 @@ def residual_analysis(Y_true, Y_pred, theta, X, max_lag=20):
 |---|---|---|
 | **Tuyến tính** | Không mô tả được quan hệ phi tuyến (ví dụ: bốc hơi nước theo mô hình Penman-Monteith) | NARX, Neural Network |
 | **Cấu trúc cố định** | na=2, nb=2, nk=1 không thay đổi theo điều kiện | Adaptive ARX, gain scheduling |
+| **Độ trễ input dùng chung** | Một giá trị `nk` duy nhất có thể không phù hợp đồng thời cho `Drip`, `Mist`, `Fan`, `Light` | Chọn `nk` từ dữ liệu hoặc dùng delay riêng cho từng input |
 | **Không nhiễu màu** | ARX giả định nhiễu là white noise; thực tế đây không phải lúc nào cũng đúng | ARMAX, OE, BJ model |
 | **Không xét nhiễu đo** | Measurement noise từ sensors không được mô hình hóa riêng | Kalman filter approach |
 
