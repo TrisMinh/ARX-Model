@@ -2,6 +2,31 @@ import numpy as np
 import pandas as pd
 
 
+TRUE_PARAMS = {
+    "a1": 0.965,
+    "a2": 0.025,
+    "b_temp_1": -0.008,
+    "b_temp_2": -0.004,
+    "b_humi_1": 0.0025,
+    "b_humi_2": 0.0012,
+    "b_light_1": -0.00022,
+    "b_light_2": -0.00010,
+    "b_drip_1": 1.25,
+    "b_drip_2": 1.85,
+    "b_mist_1": 0.05,
+    "b_mist_2": 0.03,
+    "b_fan_1": -0.05,
+    "b_fan_2": -0.03,
+    "b_temp": -0.008,
+    "b_humi": 0.0025,
+    "b_light": -0.00022,
+    "b_drip": 1.25,
+    "b_mist": 0.05,
+    "b_fan": -0.05,
+    "noise_sigma": 0.25,
+}
+
+
 def _month_to_season(month):
     if month in (3, 4, 5):
         return "spring"
@@ -20,6 +45,10 @@ def _time_of_day_setpoint_adjustment(hour):
     return 0.0, 0.0
 
 
+def get_true_params():
+    return TRUE_PARAMS.copy()
+
+
 def generate_greenhouse_data(days=365, T_s=300, seed=42, start_date="2025-01-01"):
     """
     Sinh dữ liệu synthetic cho nhà kính mini theo đúng tinh thần ARX(2,2,1).
@@ -28,10 +57,19 @@ def generate_greenhouse_data(days=365, T_s=300, seed=42, start_date="2025-01-01"
     - Soil_Moisture là biến mục tiêu
     - Mỗi input tác động với 2 lag: t-1 và t-2
     - Có setpoint, hysteresis, dwell time và môi trường ngày/đêm
+    - Mặc định sinh đủ 1 năm để đánh giá mô hình qua nhiều tháng / mùa
     """
+    if days <= 0:
+        raise ValueError("days must be positive")
+    if T_s <= 0:
+        raise ValueError("T_s must be positive")
+
     rng = np.random.default_rng(seed)
 
     samples_per_day = int(round(24 * 3600 / T_s))
+    if samples_per_day < 4:
+        raise ValueError("T_s is too large for greenhouse dynamics; expected at least 4 samples per day")
+
     N = int(days * samples_per_day)
     t = np.arange(N)
     timestamps = pd.date_range(start_date, periods=N, freq=f"{T_s}s")
@@ -62,12 +100,8 @@ def generate_greenhouse_data(days=365, T_s=300, seed=42, start_date="2025-01-01"
     seasonal_humi_offset = np.array([monthly_profile[int(m)]["humi_offset"] for m in months])
     seasonal_light_scale = np.array([monthly_profile[int(m)]["light_scale"] for m in months])
 
-    low_adjust = np.zeros(N)
-    high_adjust = np.zeros(N)
-    for i in range(N):
-        lo_adj, hi_adj = _time_of_day_setpoint_adjustment(hour[i])
-        low_adjust[i] = lo_adj
-        high_adjust[i] = hi_adj
+    low_adjust = np.where((hour >= 10.0) & (hour < 15.0), 1.0, np.where((hour >= 20.0) | (hour < 5.0), -1.0, 0.0))
+    high_adjust = low_adjust.copy()
 
     soil_low_sp = soil_low_base + low_adjust
     soil_high_sp = soil_high_base + high_adjust
@@ -109,30 +143,7 @@ def generate_greenhouse_data(days=365, T_s=300, seed=42, start_date="2025-01-01"
     )
     outdoor_humi = np.clip(outdoor_humi, 30.0, 98.0)
 
-    TRUE = {
-        "a1": 0.965,
-        "a2": 0.025,
-        "b_temp_1": -0.008,
-        "b_temp_2": -0.004,
-        "b_humi_1": 0.0025,
-        "b_humi_2": 0.0012,
-        "b_light_1": -0.00022,
-        "b_light_2": -0.00010,
-        "b_drip_1": 1.25,
-        "b_drip_2": 1.85,
-        "b_mist_1": 0.05,
-        "b_mist_2": 0.03,
-        "b_fan_1": -0.05,
-        "b_fan_2": -0.03,
-        # Alias để code cũ vẫn đọc được nếu chỉ nhìn lag 1.
-        "b_temp": -0.008,
-        "b_humi": 0.0025,
-        "b_light": -0.00022,
-        "b_drip": 1.25,
-        "b_mist": 0.05,
-        "b_fan": -0.05,
-        "noise_sigma": 0.25,
-    }
+    TRUE = get_true_params()
 
     Temp = np.zeros(N)
     Humi = np.zeros(N)
@@ -306,8 +317,10 @@ def generate_greenhouse_data(days=365, T_s=300, seed=42, start_date="2025-01-01"
 
 
 if __name__ == "__main__":
-    df, TRUE = generate_greenhouse_data(days=30, T_s=300, seed=42)
+    df, TRUE = generate_greenhouse_data(days=365, T_s=300, seed=42)
     print("Dataset Shape:", df.shape)
+    print("Date range:", df["Timestamp"].iloc[0], "->", df["Timestamp"].iloc[-1])
+    print("Months present:", sorted(df["Month"].unique().tolist()))
     print("Soil min/max:", round(df["Soil_Moisture"].min(), 2), round(df["Soil_Moisture"].max(), 2))
     print("Drip ON %:", round(df["Drip"].mean() * 100, 2))
     print("Mist ON %:", round(df["Mist"].mean() * 100, 2))

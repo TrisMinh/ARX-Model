@@ -1,8 +1,8 @@
 # ARX Model – Greenhouse Soil Moisture Prediction
 ## Tài liệu kỹ thuật đầy đủ (Full Technical Documentation)
 
-**Phiên bản:** 1.1  
-**Ngày:** 2026-03-23  
+**Phiên bản:** 2.0  
+**Ngày:** 2026-03-24  
 **Đối tượng:** Kỹ sư điều khiển, Data Scientist, Nghiên cứu sinh
 
 ---
@@ -57,6 +57,25 @@
 | `X`, `Y` | Ma trận hồi quy và vector đầu ra | Dùng cho Least Squares |
 
 > **Tóm tắt một dòng:** tài liệu này đi từ ý nghĩa vật lý của bài toán nhà kính, đến công thức ARX(2,2,1), rồi kết thúc bằng pipeline Python có thể chạy trực tiếp.
+
+---
+
+## Baseline triển khai hiện tại trong repo
+
+Để tránh lệch giữa tài liệu và code chạy thật, baseline đang được khóa như sau:
+
+- Dữ liệu mặc định: **365 ngày**, `T_s = 300 s`, bao phủ đủ **12 tháng / 4 mùa**
+- Flow dữ liệu: **`CSV -> generate fallback`**, mặc định regenerate từ `data_generator.py`
+- Split mặc định: **Train 60% / Validation 20% / Test 20%**, tuần tự theo thời gian
+- Không lọc tín hiệu trước khi fit (`APPLY_FILTERING = False`)
+- Fit trực tiếp trên **original engineering units**
+- Bộ ước lượng baseline: **Ordinary Least Squares** (`numpy.linalg.lstsq`)
+- Cấu trúc baseline để báo cáo / giải thích: **ARX(2,2,1)**, `INCLUDE_INTERCEPT = False`
+- Khi chấm chất lượng mô hình, ưu tiên:
+  - đúng dấu / gần đúng tham số thật
+  - residual diagnostics
+  - `12-step` và `free-run` trên validation / test
+  - so sánh với **theoretical deterministic free-run ceiling** khi dùng synthetic data
 
 ---
 
@@ -398,6 +417,8 @@ Nếu `XᵀX` gần singular (do multicollinearity), dùng **Ridge Regression**:
 
 Trong đó λ > 0 là tham số regularization.
 
+> **Lưu ý cho repo này:** phần triển khai hiện tại **không dùng Ridge làm baseline**. Baseline chính thức dùng `numpy.linalg.lstsq` để giữ diễn giải OLS nhất quán với covariance, confidence interval và so sánh tham số thật.
+
 ### 9.5 Recursive Least Squares (RLS) – cho dữ liệu streaming
 
 Khi dữ liệu đến theo thời gian thực, dùng RLS để cập nhật θ̂ không cần tính lại toàn bộ:
@@ -502,11 +523,13 @@ BIC phạt complexity mạnh hơn AIC → thường chọn mô hình đơn giả
 
 ### 11.7 Bảng kết quả mẫu
 
-| Metric | Training (DS1) | Validation (DS2) | Đánh giá |
+| Metric | Validation (1-step) | Validation/Test (free-run) | Đánh giá |
 |---|---|---|---|
-| RMSE | ≤ 1.5% | ≤ 2.5% | Tốt |
-| FIT | ≥ 85% | ≥ 75% | Chấp nhận được |
-| R² | ≥ 0.92 | ≥ 0.85 | Tốt |
+| RMSE | Càng thấp càng tốt | Càng thấp càng tốt | So với baseline và theoretical ceiling |
+| FIT | ≥ 85% thường là tốt | Phụ thuộc động học + mức nhiễu | Không được tự suy diễn từ train metrics |
+| R² | ≥ 0.92 thường là tốt | Càng cao càng tốt | Phải đi cùng residual diagnostics |
+
+> **Khi dùng synthetic data:** nếu free-run của mô hình gần với free-run của **true parameters**, đó là dấu hiệu tốt hơn việc ép FIT đạt một ngưỡng tuyệt đối.
 
 ---
 
@@ -515,17 +538,18 @@ BIC phạt complexity mạnh hơn AIC → thường chọn mô hình đơn giả
 ### 12.1 Phân chia tập dữ liệu
 
 ```
-┌─────────────────────────────────────────────┐
-│                 Full Dataset                │
-│                                             │
-│   DS1 (Training, 70%)  │  DS2 (Valid, 30%) │
-└─────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                          Full Dataset                          │
+│                                                                │
+│   DS1 (Train, 60%)   │   DS2 (Valid, 20%)   │   DS3 (Test, 20%) │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-**Cách phân chia tốt nhất cho time series:**
+**Cách phân chia baseline cho repo hiện tại:**
 - Dùng **phân chia tuần tự theo thời gian** (không shuffle)
-- DS1: N₁ = 70% mẫu đầu tiên
-- DS2: N₂ = 30% mẫu cuối
+- DS1: 60% mẫu đầu tiên để fit tham số
+- DS2: 20% mẫu tiếp theo để đánh giá và chọn cấu trúc tham khảo
+- DS3: 20% mẫu cuối để kiểm tra khả năng tổng quát hóa cuối cùng
 
 > **Không dùng random split** cho time series vì sẽ gây **data leakage** (thông tin tương lai rò rỉ vào training).
 
@@ -577,7 +601,9 @@ assert df['Humidity'].between(0, 100).all()
 
 ### 13.3 Normalization / Scaling
 
-**Khuyến nghị:** Chuẩn hóa inputs để tránh dominance của biến có range lớn:
+**Khuyến nghị cho baseline trong repo:** **không chuẩn hóa** khi fit ARX(2,2,1) synthetic này, vì mục tiêu là giữ hệ số ở đơn vị vật lý gốc và so sánh trực tiếp với `true_params`.
+
+Nếu chuyển sang dữ liệu thực nhiều cảm biến hơn hoặc bài toán regularized identification, có thể chuẩn hóa inputs như sau:
 
 ```python
 from sklearn.preprocessing import StandardScaler
@@ -587,7 +613,7 @@ X_scaled = scaler.fit_transform(X_train)   # Fit trên training
 X_val_scaled = scaler.transform(X_val)     # Transform validation (KHÔNG fit lại)
 ```
 
-> **Lưu ý:** Soil Moisture (output y) có thể giữ nguyên hoặc chuẩn hóa. Nếu chuẩn hóa y, cần inverse transform khi dự đoán.
+> **Lưu ý:** nếu chuẩn hóa y hoặc dùng Ridge / Lasso, phải đổi luôn cách diễn giải tham số và uncertainty. Không nên trộn pipeline regularized với cách giải thích kiểu OLS chuẩn.
 
 ### 13.4 Persistent Excitation Check
 
@@ -666,6 +692,12 @@ Nếu bạn chỉ muốn chạy pipeline nhanh, thứ tự nên là:
 - `arx_results.png`: biểu đồ dự đoán và phần dư
 
 ### 14.3 Code đầy đủ ARX(2,2,1)
+
+> **Ghi chú đồng bộ repo:** phần code đầy đủ dưới đây mang tính minh họa. Phần triển khai đang dùng thật trong repo đã được tách sang `arx_pipeline.py`, có thêm:
+> - split tuần tự `60% / 20% / 20%`
+> - metrics cho `1-step`, `12-step`, `free-run`
+> - residual diagnostics đầy đủ (Shapiro, D'Agostino, Ljung-Box, input cross-correlation)
+> - so sánh với `true_params` và theoretical deterministic free-run ceiling
 
 Trước khi xem code, đây là vai trò của từng hàm:
 
