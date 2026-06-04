@@ -1,0 +1,458 @@
+{
+  "model_type": "ARX",
+  "version": "v6_512_augmented_zscore_intercept_ridge_clip",
+  "version_number": 6,
+  "notes": "ARX(5,1,2), 16 augmented inputs, Ridge alpha search, z-score normalization, intercept, free-run clip.",
+  "data_source": "CSV:greenhouse_data.csv",
+  "data_config": {
+    "csv_path": "C:\\Users\\minht\\OneDrive\\Desktop\\ARX-Model\\greenhouse_data.csv",
+    "generator_script_path": "C:\\Users\\minht\\OneDrive\\Desktop\\ARX-Model\\data_generator.py",
+    "force_regenerate_from_script": false,
+    "auto_save_generated_csv": true,
+    "generated_days": 365,
+    "generated_sampling_seconds": 300,
+    "generated_seed": 42,
+    "generated_start_date": "2025-01-01"
+  },
+  "split_config": {
+    "train_ratio": 0.6,
+    "val_ratio": 0.2
+  },
+  "model_config": {
+    "na": 5,
+    "nb": 1,
+    "nk": 2,
+    "include_intercept": true,
+    "input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan",
+      "Light_log",
+      "Temp_x_Humi",
+      "Temp_x_Light",
+      "Humi_x_Light",
+      "SP_Center",
+      "SP_Width",
+      "Month_sin",
+      "Month_cos",
+      "Season_sin",
+      "Season_cos"
+    ],
+    "output_col": "Soil_Moisture",
+    "simulation_clip": [
+      -2.0642032653307445,
+      2.1303300718324136
+    ]
+  },
+  "feature_engineering": {
+    "enabled": true,
+    "raw_input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan"
+    ],
+    "input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan",
+      "Light_log",
+      "Temp_x_Humi",
+      "Temp_x_Light",
+      "Humi_x_Light",
+      "SP_Center",
+      "SP_Width",
+      "Month_sin",
+      "Month_cos",
+      "Season_sin",
+      "Season_cos"
+    ],
+    "new_features": [
+      "Light_log",
+      "Temp_x_Humi",
+      "Temp_x_Light",
+      "Humi_x_Light",
+      "SP_Center",
+      "SP_Width",
+      "Month_sin",
+      "Month_cos",
+      "Season_sin",
+      "Season_cos"
+    ]
+  },
+  "normalization": {
+    "enabled": true,
+    "method": "zscore",
+    "fit_on": "train",
+    "scaled_columns": [
+      "Soil_Moisture",
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan",
+      "Light_log",
+      "Temp_x_Humi",
+      "Temp_x_Light",
+      "Humi_x_Light",
+      "SP_Center",
+      "SP_Width",
+      "Month_sin",
+      "Month_cos",
+      "Season_sin",
+      "Season_cos"
+    ],
+    "stats": {
+      "Soil_Moisture": {
+        "mean": 57.46877733587907,
+        "std": 3.353447815530527
+      },
+      "Temperature": {
+        "mean": 25.65978917154991,
+        "std": 3.5782808225913567
+      },
+      "Humidity": {
+        "mean": 73.49287752662778,
+        "std": 8.072112204197003
+      },
+      "Light": {
+        "mean": 288.8825546309566,
+        "std": 344.2466246366187
+      },
+      "Drip": {
+        "mean": 0.22948376458650432,
+        "std": 0.42050085181567726
+      },
+      "Mist": {
+        "mean": 0.07813292744799594,
+        "std": 0.268380649631083
+      },
+      "Fan": {
+        "mean": 0.1746099695585997,
+        "std": 0.37963314935519604
+      },
+      "Light_log": {
+        "mean": 4.08543809392874,
+        "std": 2.2291499784230577
+      },
+      "Temp_x_Humi": {
+        "mean": 1868.0324140237738,
+        "std": 230.65172184872938
+      },
+      "Temp_x_Light": {
+        "mean": 109.06659642079251,
+        "std": 65.88021026377714
+      },
+      "Humi_x_Light": {
+        "mean": 291.63497994784,
+        "std": 151.876359180119
+      },
+      "SP_Center": {
+        "mean": 59.41552511415525,
+        "std": 2.137069233062777
+      },
+      "SP_Width": {
+        "mean": 9.0,
+        "std": 1.0
+      },
+      "Month_sin": {
+        "mean": 0.4140059159498008,
+        "std": 0.5467346122770743
+      },
+      "Month_cos": {
+        "mean": -0.28012231743067406,
+        "std": 0.6717230475233618
+      },
+      "Season_sin": {
+        "mean": 0.0410958904109589,
+        "std": 0.7604076561887165
+      },
+      "Season_cos": {
+        "mean": 0.4200913242009132,
+        "std": 0.4935733010729374
+      }
+    }
+  },
+  "regularization": {
+    "method": "ridge",
+    "alpha_grid": [
+      0.0,
+      1e-06,
+      1e-05,
+      0.0001,
+      0.001,
+      0.01,
+      0.1,
+      1.0,
+      10.0,
+      100.0
+    ],
+    "best_alpha": 0.0,
+    "selected_by": "max validation FIT_sim",
+    "penalize_intercept": false
+  },
+  "simulation_clip": {
+    "enabled": true,
+    "source": "train Soil_Moisture quantiles",
+    "quantiles": [
+      0.01,
+      0.99
+    ],
+    "bounds_real": [
+      50.5465794049447,
+      64.61272806162447
+    ],
+    "bounds_model": [
+      -2.0642032653307445,
+      2.1303300718324136
+    ]
+  },
+  "param_names": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "b_Temperature_1",
+    "b_Humidity_1",
+    "b_Light_1",
+    "b_Drip_1",
+    "b_Mist_1",
+    "b_Fan_1",
+    "b_Light_log_1",
+    "b_Temp_x_Humi_1",
+    "b_Temp_x_Light_1",
+    "b_Humi_x_Light_1",
+    "b_SP_Center_1",
+    "b_SP_Width_1",
+    "b_Month_sin_1",
+    "b_Month_cos_1",
+    "b_Season_sin_1",
+    "b_Season_cos_1",
+    "intercept"
+  ],
+  "theta_hat": [
+    0.8672886234875036,
+    0.1736106735499548,
+    -0.33577533270402393,
+    0.3464884999200176,
+    -0.1479536864305392,
+    -0.021225270554314116,
+    0.001682491897325662,
+    -0.04403653139366415,
+    0.3332194474494247,
+    0.005076332271909634,
+    -0.007168335394144742,
+    0.004170768524207429,
+    0.006557636259580153,
+    -0.002897258063797601,
+    0.0007286084006261132,
+    0.048358854981039416,
+    -1.249000902703301e-16,
+    -0.0011245962932022158,
+    -0.002933568705173853,
+    0.0014997582346770533,
+    0.00040081226220185356,
+    -4.139608684227157e-06
+  ],
+  "sigma2": 0.014878042708581085,
+  "matrix_info": {
+    "x_train_shape": [
+      63067,
+      22
+    ],
+    "y_train_shape": [
+      63067
+    ],
+    "rank_x_train": 21,
+    "condition_number_xtx": 3.7396485752507904e+18,
+    "sigma2_ols": 0.014878042708581085,
+    "sigma2_selected": 0.014878042708581085
+  },
+  "alpha_search": [
+    {
+      "alpha": 0.0,
+      "train_FIT_sim": 71.44298774431488,
+      "val_FIT_1step": 86.29823048184699,
+      "val_FIT_12step": 69.80509948963034,
+      "val_FIT_sim": 68.84107198659018,
+      "val_RMSE_sim": 0.9354853379208526,
+      "test_FIT_sim": 66.41757488973361,
+      "test_RMSE_sim": 0.9782128165768166,
+      "theta_l2": 1.0737527489617702
+    },
+    {
+      "alpha": 1e-06,
+      "train_FIT_sim": 71.44298774336649,
+      "val_FIT_1step": 86.29823048169347,
+      "val_FIT_12step": 69.8050994880298,
+      "val_FIT_sim": 68.84107198588157,
+      "val_RMSE_sim": 0.9354853379421271,
+      "test_FIT_sim": 66.41757488898037,
+      "test_RMSE_sim": 0.9782128165987577,
+      "theta_l2": 1.0737527479055071
+    },
+    {
+      "alpha": 1e-05,
+      "train_FIT_sim": 71.44298773482835,
+      "val_FIT_1step": 86.29823048031162,
+      "val_FIT_12step": 69.80509947361774,
+      "val_FIT_sim": 68.84107197949871,
+      "val_RMSE_sim": 0.9354853381337596,
+      "test_FIT_sim": 66.41757488219248,
+      "test_RMSE_sim": 0.9782128167964799,
+      "theta_l2": 1.0737527383990944
+    },
+    {
+      "alpha": 0.0001,
+      "train_FIT_sim": 71.44298764943942,
+      "val_FIT_1step": 86.29823046649364,
+      "val_FIT_12step": 69.80509932948786,
+      "val_FIT_sim": 68.84107191566966,
+      "val_RMSE_sim": 0.935485340050101,
+      "test_FIT_sim": 66.41757481430275,
+      "test_RMSE_sim": 0.9782128187740204,
+      "theta_l2": 1.0737526433353939
+    },
+    {
+      "alpha": 0.001,
+      "train_FIT_sim": 71.44298679558479,
+      "val_FIT_1step": 86.29823032830582,
+      "val_FIT_12step": 69.80509788823711,
+      "val_FIT_sim": 68.84107127739082,
+      "val_RMSE_sim": 0.9354853592131636,
+      "test_FIT_sim": 66.4175741354622,
+      "test_RMSE_sim": 0.9782128385477717,
+      "theta_l2": 1.073751692702524
+    },
+    {
+      "alpha": 0.01,
+      "train_FIT_sim": 71.44297825756034,
+      "val_FIT_1step": 86.29822894574744,
+      "val_FIT_12step": 69.80508347618753,
+      "val_FIT_sim": 68.84106489451686,
+      "val_RMSE_sim": 0.935485550846361,
+      "test_FIT_sim": 66.41756734746062,
+      "test_RMSE_sim": 0.9782130362735209,
+      "theta_l2": 1.0737421867831805
+    },
+    {
+      "alpha": 0.1,
+      "train_FIT_sim": 71.44289293045121,
+      "val_FIT_1step": 86.29821505215534,
+      "val_FIT_12step": 69.80493940292567,
+      "val_FIT_sim": 68.84100105778411,
+      "val_RMSE_sim": 0.935487467418314,
+      "test_FIT_sim": 66.41749950953204,
+      "test_RMSE_sim": 0.9782150123050601,
+      "theta_l2": 1.0736471685192042
+    },
+    {
+      "alpha": 1.0,
+      "train_FIT_sim": 71.44204491809818,
+      "val_FIT_1step": 86.29806936060376,
+      "val_FIT_12step": 69.80350338090192,
+      "val_FIT_sim": 68.8403619299544,
+      "val_RMSE_sim": 0.9355066559704202,
+      "test_FIT_sim": 66.41682529006621,
+      "test_RMSE_sim": 0.9782346514502526,
+      "theta_l2": 1.0727010546615927
+    },
+    {
+      "alpha": 10.0,
+      "train_FIT_sim": 71.43402246499613,
+      "val_FIT_1step": 86.29597902431048,
+      "val_FIT_12step": 69.78959660957563,
+      "val_FIT_sim": 68.83392517024168,
+      "val_RMSE_sim": 0.9356999069812499,
+      "test_FIT_sim": 66.41045440990561,
+      "test_RMSE_sim": 0.9784202269888121,
+      "theta_l2": 1.0636242889821415
+    },
+    {
+      "alpha": 100.0,
+      "train_FIT_sim": 71.37449221114487,
+      "val_FIT_1step": 86.23699545508796,
+      "val_FIT_12step": 69.67761898492813,
+      "val_FIT_sim": 68.77037985542916,
+      "val_RMSE_sim": 0.9376077296853913,
+      "test_FIT_sim": 66.35668432978238,
+      "test_RMSE_sim": 0.9799864802106149,
+      "theta_l2": 0.9980076611085972
+    }
+  ],
+  "ar_roots": [],
+  "metrics": {
+    "train": {
+      "fit_1": 87.80504384483241,
+      "fit_12": 72.10013268316109,
+      "fit_sim": 71.44298774431488,
+      "rmse_sim": 0.957681759840919
+    },
+    "validation": {
+      "fit_1": 86.29823048184699,
+      "fit_12": 69.80509948963034,
+      "fit_sim": 68.84107198659018,
+      "rmse_sim": 0.9354853379208526
+    },
+    "test": {
+      "fit_1": 85.84919283120026,
+      "fit_12": 67.16010134795975,
+      "fit_sim": 66.41757488973361,
+      "rmse_sim": 0.9782128165768166
+    }
+  },
+  "comparison_512": [
+    {
+      "version": "512 V1",
+      "val_FIT_sim": 45.30798715812839,
+      "test_FIT_sim": 34.11707265135199,
+      "test_gain_vs_v1": 0.0,
+      "test_gain_vs_previous": NaN
+    },
+    {
+      "version": "512 V2",
+      "val_FIT_sim": 54.23341890815669,
+      "test_FIT_sim": 30.171959135150118,
+      "test_gain_vs_v1": -3.9451135162018716,
+      "test_gain_vs_previous": -3.9451135162018716
+    },
+    {
+      "version": "512 V3",
+      "val_FIT_sim": 54.23325368943161,
+      "test_FIT_sim": 30.173944998461444,
+      "test_gain_vs_v1": -3.9431276528905457,
+      "test_gain_vs_previous": 0.001985863311325886
+    },
+    {
+      "version": "512 V4",
+      "val_FIT_sim": 54.28364792741911,
+      "test_FIT_sim": 30.244872083966634,
+      "test_gain_vs_v1": -3.872200567385356,
+      "test_gain_vs_previous": 0.07092708550518978
+    },
+    {
+      "version": "512 V5",
+      "val_FIT_sim": 69.3149114812481,
+      "test_FIT_sim": 66.32520640987902,
+      "test_gain_vs_v1": 32.208133758527026,
+      "test_gain_vs_previous": 36.08033432591238
+    },
+    {
+      "version": "512 V6",
+      "val_FIT_sim": 68.8411,
+      "test_FIT_sim": 66.4176,
+      "test_gain_vs_v1": 32.300527348648004,
+      "test_gain_vs_previous": 0.09239359012097736
+    }
+  ]
+}

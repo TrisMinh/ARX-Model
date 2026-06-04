@@ -1,0 +1,605 @@
+{
+  "model_type": "ARX",
+  "version": "v7_512_missing_augmented_zscore_intercept_ridge_clip",
+  "version_number": 7,
+  "notes": "ARX(5,1,2), 16 augmented inputs, missing-data handling, Ridge alpha search, z-score normalization, intercept, free-run clip.",
+  "data_source": "CSV:greenhouse_data.csv",
+  "data_config": {
+    "csv_path": "C:\\Users\\minht\\OneDrive\\Desktop\\ARX-Model\\greenhouse_data.csv",
+    "generator_script_path": "C:\\Users\\minht\\OneDrive\\Desktop\\ARX-Model\\data_generator.py",
+    "force_regenerate_from_script": false,
+    "auto_save_generated_csv": true,
+    "generated_days": 365,
+    "generated_sampling_seconds": 300,
+    "generated_seed": 42,
+    "generated_start_date": "2025-01-01"
+  },
+  "split_config": {
+    "train_ratio": 0.75,
+    "val_ratio": 0.15
+  },
+  "model_config": {
+    "na": 5,
+    "nb": 1,
+    "nk": 2,
+    "include_intercept": true,
+    "input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan",
+      "Light_log",
+      "Temp_x_Humi",
+      "Temp_x_Light",
+      "Humi_x_Light",
+      "SP_Center",
+      "SP_Width",
+      "Month_sin",
+      "Month_cos",
+      "Season_sin",
+      "Season_cos"
+    ],
+    "output_col": "Soil_Moisture",
+    "simulation_clip": [
+      -2.111235076388017,
+      2.116751558855979
+    ]
+  },
+  "missing_data_handling": {
+    "enabled": true,
+    "continuous_strategy": "linear interpolation + ffill/bfill",
+    "binary_strategy": "ffill/bfill then round and clip to 0/1",
+    "categorical_strategy": "ffill/bfill",
+    "summary": [
+      {
+        "stage": "before_handling",
+        "column": "Soil_Moisture",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Temperature",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Humidity",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Light",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Soil_Low_SP",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Soil_High_SP",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Drip",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Mist",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Fan",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Month",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "before_handling",
+        "column": "Season",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Soil_Moisture",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Temperature",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Humidity",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Light",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Soil_Low_SP",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Soil_High_SP",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Drip",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Mist",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Fan",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Month",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      {
+        "stage": "after_handling",
+        "column": "Season",
+        "missing_count": 0,
+        "missing_pct": 0.0
+      }
+    ]
+  },
+  "feature_engineering": {
+    "enabled": true,
+    "raw_input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan"
+    ],
+    "input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan",
+      "Light_log",
+      "Temp_x_Humi",
+      "Temp_x_Light",
+      "Humi_x_Light",
+      "SP_Center",
+      "SP_Width",
+      "Month_sin",
+      "Month_cos",
+      "Season_sin",
+      "Season_cos"
+    ],
+    "new_features": [
+      "Light_log",
+      "Temp_x_Humi",
+      "Temp_x_Light",
+      "Humi_x_Light",
+      "SP_Center",
+      "SP_Width",
+      "Month_sin",
+      "Month_cos",
+      "Season_sin",
+      "Season_cos"
+    ]
+  },
+  "normalization": {
+    "enabled": true,
+    "method": "zscore",
+    "fit_on": "train",
+    "scaled_columns": [
+      "Soil_Moisture",
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan",
+      "Light_log",
+      "Temp_x_Humi",
+      "Temp_x_Light",
+      "Humi_x_Light",
+      "SP_Center",
+      "SP_Width",
+      "Month_sin",
+      "Month_cos",
+      "Season_sin",
+      "Season_cos"
+    ],
+    "stats": {
+      "Soil_Moisture": {
+        "mean": 57.60881251695704,
+        "std": 3.287599168994301
+      },
+      "Temperature": {
+        "mean": 25.84075308436289,
+        "std": 3.4305551752396544
+      },
+      "Humidity": {
+        "mean": 73.26424621652004,
+        "std": 8.145400360651013
+      },
+      "Light": {
+        "mean": 293.17486267791423,
+        "std": 348.72504877884074
+      },
+      "Drip": {
+        "mean": 0.23112633181126332,
+        "std": 0.4215530222341351
+      },
+      "Mist": {
+        "mean": 0.08334601725012684,
+        "std": 0.2764045199678696
+      },
+      "Fan": {
+        "mean": 0.17809487569761542,
+        "std": 0.3825925913394904
+      },
+      "Light_log": {
+        "mean": 4.103305365099241,
+        "std": 2.226116413448862
+      },
+      "Temp_x_Humi": {
+        "mean": 1876.3300615281623,
+        "std": 226.7161112226341
+      },
+      "Temp_x_Light": {
+        "mean": 110.04244405245531,
+        "std": 65.75331932384988
+      },
+      "Humi_x_Light": {
+        "mean": 292.11205858447704,
+        "std": 151.42312267473875
+      },
+      "SP_Center": {
+        "mean": 59.57214611872146,
+        "std": 2.0163639057131313
+      },
+      "SP_Width": {
+        "mean": 9.0,
+        "std": 1.0
+      },
+      "Month_sin": {
+        "mean": 0.14331750447248046,
+        "std": 0.7301459175728575
+      },
+      "Month_cos": {
+        "mean": -0.26656360736919676,
+        "std": 0.6126098882566222
+      },
+      "Season_sin": {
+        "mean": 0.12054794520547946,
+        "std": 0.7328481196146434
+      },
+      "Season_cos": {
+        "mean": 0.22374429223744288,
+        "std": 0.631142074477042
+      }
+    }
+  },
+  "regularization": {
+    "method": "ridge",
+    "alpha_grid": [
+      0.0,
+      1e-06,
+      1e-05,
+      0.0001,
+      0.001,
+      0.01,
+      0.1,
+      1.0,
+      10.0,
+      100.0
+    ],
+    "best_alpha": 0.0,
+    "selected_by": "max validation FIT_sim",
+    "penalize_intercept": false
+  },
+  "simulation_clip": {
+    "enabled": true,
+    "source": "train Soil_Moisture quantiles",
+    "quantiles": [
+      0.01,
+      0.99
+    ],
+    "bounds_real": [
+      50.667917834272174,
+      64.56784318281935
+    ],
+    "bounds_model": [
+      -2.111235076388017,
+      2.116751558855979
+    ]
+  },
+  "param_names": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "b_Temperature_1",
+    "b_Humidity_1",
+    "b_Light_1",
+    "b_Drip_1",
+    "b_Mist_1",
+    "b_Fan_1",
+    "b_Light_log_1",
+    "b_Temp_x_Humi_1",
+    "b_Temp_x_Light_1",
+    "b_Humi_x_Light_1",
+    "b_SP_Center_1",
+    "b_SP_Width_1",
+    "b_Month_sin_1",
+    "b_Month_cos_1",
+    "b_Season_sin_1",
+    "b_Season_cos_1",
+    "intercept"
+  ],
+  "theta_hat": [
+    0.86777946323171,
+    0.1726812810103523,
+    -0.33788514811593184,
+    0.34924868853464863,
+    -0.1496731443467834,
+    -0.014149951370166938,
+    0.007364241860147587,
+    -0.045661044671137796,
+    0.34017711801709527,
+    0.005351407058231333,
+    -0.007726744301922592,
+    0.01148273266583731,
+    0.001372315650602269,
+    -0.006316234055304603,
+    -0.002998186513528593,
+    0.04725433945158698,
+    -8.326672684688674e-17,
+    -0.0017039091528761737,
+    -0.0032396700688450274,
+    0.0010006277690430625,
+    0.00020394708826347794,
+    1.8103274348090658e-06
+  ],
+  "sigma2": 0.015530686264724026,
+  "matrix_info": {
+    "x_train_shape": [
+      78835,
+      22
+    ],
+    "y_train_shape": [
+      78835
+    ],
+    "rank_x_train": 21,
+    "condition_number_xtx": 4.472723214447855e+18,
+    "sigma2_ols": 0.015530686264724026,
+    "sigma2_selected": 0.015530686264724026
+  },
+  "alpha_search": [
+    {
+      "alpha": 0.0,
+      "train_FIT_sim": 70.93375616401134,
+      "val_FIT_1step": 85.54254111174492,
+      "val_FIT_12step": 67.47240891155121,
+      "val_FIT_sim": 66.59308890103175,
+      "val_RMSE_sim": 0.9509947386513963,
+      "test_FIT_sim": 65.0093877865084,
+      "test_RMSE_sim": 1.0085970328326619,
+      "theta_l2": 1.0779523746488053
+    },
+    {
+      "alpha": 1e-06,
+      "train_FIT_sim": 70.93375616333668,
+      "val_FIT_1step": 85.54254111185881,
+      "val_FIT_12step": 67.47240891000197,
+      "val_FIT_sim": 66.59308890007291,
+      "val_RMSE_sim": 0.9509947386786912,
+      "test_FIT_sim": 65.00938778615367,
+      "test_RMSE_sim": 1.008597032842887,
+      "theta_l2": 1.0779523738336143
+    },
+    {
+      "alpha": 1e-05,
+      "train_FIT_sim": 70.93375615725724,
+      "val_FIT_1step": 85.54254111288341,
+      "val_FIT_12step": 67.47240889604267,
+      "val_FIT_sim": 66.59308889143382,
+      "val_RMSE_sim": 0.9509947389246202,
+      "test_FIT_sim": 65.00938778294726,
+      "test_RMSE_sim": 1.0085970329353109,
+      "theta_l2": 1.0779523664967643
+    },
+    {
+      "alpha": 0.0001,
+      "train_FIT_sim": 70.93375609649068,
+      "val_FIT_1step": 85.54254112313055,
+      "val_FIT_12step": 67.47240875652183,
+      "val_FIT_sim": 66.5930888050912,
+      "val_RMSE_sim": 0.9509947413825363,
+      "test_FIT_sim": 65.00938775094657,
+      "test_RMSE_sim": 1.0085970338577241,
+      "theta_l2": 1.077952293128609
+    },
+    {
+      "alpha": 0.001,
+      "train_FIT_sim": 70.93375548879138,
+      "val_FIT_1step": 85.54254122559557,
+      "val_FIT_12step": 67.47240736122373,
+      "val_FIT_sim": 66.59308794160307,
+      "val_RMSE_sim": 0.950994765963458,
+      "test_FIT_sim": 65.00938743085835,
+      "test_RMSE_sim": 1.0085970430841995,
+      "theta_l2": 1.0779515594492728
+    },
+    {
+      "alpha": 0.01,
+      "train_FIT_sim": 70.93374941203491,
+      "val_FIT_1step": 85.54254224977531,
+      "val_FIT_12step": 67.4723934087658,
+      "val_FIT_sim": 66.59307930705161,
+      "val_RMSE_sim": 0.9509950117632863,
+      "test_FIT_sim": 65.00938423019835,
+      "test_RMSE_sim": 1.0085971353425505,
+      "theta_l2": 1.0779442228976188
+    },
+    {
+      "alpha": 0.1,
+      "train_FIT_sim": 70.93368866809911,
+      "val_FIT_1step": 85.54255244454265,
+      "val_FIT_12step": 67.47225393607557,
+      "val_FIT_sim": 66.59299299395079,
+      "val_RMSE_sim": 0.9509974688388453,
+      "test_FIT_sim": 65.00935224601243,
+      "test_RMSE_sim": 1.0085980572799782,
+      "theta_l2": 1.077870881557699
+    },
+    {
+      "alpha": 1.0,
+      "train_FIT_sim": 70.9330835087057,
+      "val_FIT_1step": 85.54264971137972,
+      "val_FIT_12step": 67.47086435884525,
+      "val_FIT_sim": 66.59213307561092,
+      "val_RMSE_sim": 0.9510219481393846,
+      "test_FIT_sim": 65.00903461711354,
+      "test_RMSE_sim": 1.00860721286614,
+      "theta_l2": 1.0771398751544514
+    },
+    {
+      "alpha": 10.0,
+      "train_FIT_sim": 70.92725025792856,
+      "val_FIT_1step": 85.54317549691764,
+      "val_FIT_12step": 67.45745204309334,
+      "val_FIT_sim": 66.58386251845536,
+      "val_RMSE_sim": 0.9512573861395444,
+      "test_FIT_sim": 65.00605608212442,
+      "test_RMSE_sim": 1.0086930685103304,
+      "theta_l2": 1.0700603896554624
+    },
+    {
+      "alpha": 100.0,
+      "train_FIT_sim": 70.88071489770431,
+      "val_FIT_1step": 85.51800561033376,
+      "val_FIT_12step": 67.35116166307901,
+      "val_FIT_sim": 66.51680251067593,
+      "val_RMSE_sim": 0.9531663837832723,
+      "test_FIT_sim": 64.98320335276078,
+      "test_RMSE_sim": 1.0093517936245886,
+      "theta_l2": 1.0156337131344235
+    }
+  ],
+  "ar_roots": [],
+  "metrics": {
+    "train": {
+      "fit_1": 87.53990839930017,
+      "fit_12": 71.58637269804782,
+      "fit_sim": 70.93375616401134,
+      "rmse_sim": 0.955611255463023
+    },
+    "validation": {
+      "fit_1": 85.54254111174492,
+      "fit_12": 67.47240891155121,
+      "fit_sim": 66.59308890103175,
+      "rmse_sim": 0.9509947386513963
+    },
+    "test": {
+      "fit_1": 85.7267567349267,
+      "fit_12": 65.65867359384134,
+      "fit_sim": 65.0093877865084,
+      "rmse_sim": 1.0085970328326619
+    }
+  },
+  "comparison_512": [
+    {
+      "version": "512 V1",
+      "val_FIT_sim": 45.30798715812839,
+      "test_FIT_sim": 34.11707265135199,
+      "test_gain_vs_v1": 0.0,
+      "test_gain_vs_previous": NaN
+    },
+    {
+      "version": "512 V2",
+      "val_FIT_sim": 54.23341890815669,
+      "test_FIT_sim": 30.171959135150118,
+      "test_gain_vs_v1": -3.9451135162018716,
+      "test_gain_vs_previous": -3.9451135162018716
+    },
+    {
+      "version": "512 V3",
+      "val_FIT_sim": 54.23325368943161,
+      "test_FIT_sim": 30.173944998461444,
+      "test_gain_vs_v1": -3.9431276528905457,
+      "test_gain_vs_previous": 0.001985863311325886
+    },
+    {
+      "version": "512 V4",
+      "val_FIT_sim": 54.28364792741911,
+      "test_FIT_sim": 30.244872083966634,
+      "test_gain_vs_v1": -3.872200567385356,
+      "test_gain_vs_previous": 0.07092708550518978
+    },
+    {
+      "version": "512 V5",
+      "val_FIT_sim": 69.3149114812481,
+      "test_FIT_sim": 66.32520640987902,
+      "test_gain_vs_v1": 32.208133758527026,
+      "test_gain_vs_previous": 36.08033432591238
+    },
+    {
+      "version": "512 V6",
+      "val_FIT_sim": 68.84107198659018,
+      "test_FIT_sim": 66.41757488973361,
+      "test_gain_vs_v1": 32.300502238381625,
+      "test_gain_vs_previous": 0.09236847985459917
+    },
+    {
+      "version": "512 V7",
+      "val_FIT_sim": 66.5931,
+      "test_FIT_sim": 65.0094,
+      "test_gain_vs_v1": 30.89232734864801,
+      "test_gain_vs_previous": -1.4081748897336155
+    }
+  ]
+}

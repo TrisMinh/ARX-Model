@@ -1,0 +1,238 @@
+{
+  "model_type": "NARX",
+  "version": "narx_v4_closed_loop_retraining",
+  "order": {
+    "na": 1,
+    "nb": 5,
+    "nk": 2
+  },
+  "input_cols": [
+    "Temperature",
+    "Humidity",
+    "Light",
+    "Drip",
+    "Mist",
+    "Fan",
+    "Light_log",
+    "Temp_x_Humi",
+    "Temp_x_Light",
+    "Humi_x_Light",
+    "SP_Center",
+    "SP_Width",
+    "Month_sin",
+    "Month_cos",
+    "Season_sin",
+    "Season_cos"
+  ],
+  "normalization": {
+    "method": "zscore",
+    "fit_on": "train",
+    "stats": {
+      "Soil_Moisture": {
+        "mean": 57.46877733587907,
+        "std": 3.353447815530527
+      },
+      "Temperature": {
+        "mean": 25.65978917154991,
+        "std": 3.5782808225913567
+      },
+      "Humidity": {
+        "mean": 73.49287752662778,
+        "std": 8.072112204197003
+      },
+      "Light": {
+        "mean": 288.8825546309566,
+        "std": 344.2466246366187
+      },
+      "Drip": {
+        "mean": 0.22948376458650432,
+        "std": 0.42050085181567726
+      },
+      "Mist": {
+        "mean": 0.07813292744799594,
+        "std": 0.268380649631083
+      },
+      "Fan": {
+        "mean": 0.1746099695585997,
+        "std": 0.37963314935519604
+      },
+      "Light_log": {
+        "mean": 4.08543809392874,
+        "std": 2.2291499784230577
+      },
+      "Temp_x_Humi": {
+        "mean": 1868.0324140237738,
+        "std": 230.65172184872938
+      },
+      "Temp_x_Light": {
+        "mean": 109.06659642079251,
+        "std": 65.88021026377714
+      },
+      "Humi_x_Light": {
+        "mean": 291.63497994784,
+        "std": 151.876359180119
+      },
+      "SP_Center": {
+        "mean": 59.41552511415525,
+        "std": 2.137069233062777
+      },
+      "SP_Width": {
+        "mean": 9.0,
+        "std": 1.0
+      },
+      "Month_sin": {
+        "mean": 0.4140059159498008,
+        "std": 0.5467346122770743
+      },
+      "Month_cos": {
+        "mean": -0.28012231743067406,
+        "std": 0.6717230475233618
+      },
+      "Season_sin": {
+        "mean": 0.0410958904109589,
+        "std": 0.7604076561887165
+      },
+      "Season_cos": {
+        "mean": 0.4200913242009132,
+        "std": 0.4935733010729374
+      }
+    }
+  },
+  "simulation_clip": {
+    "enabled": true,
+    "bounds_real": [
+      50.5465794049447,
+      64.61272806162447
+    ],
+    "bounds_scaled": [
+      -2.0642032653307445,
+      2.1303300718324136
+    ]
+  },
+  "mlp_config": {
+    "hidden": [
+      32,
+      16
+    ],
+    "activation": "relu",
+    "alpha": 1e-05
+  },
+  "closed_loop_training": {
+    "enabled": true,
+    "base_train_rows": 63066,
+    "simlag_train_rows": 63066,
+    "final_train_rows": 126132,
+    "base_n_iter": 84,
+    "base_loss": 0.004617376381051172,
+    "final_n_iter": 64,
+    "final_loss": 0.018304834319995,
+    "base_train_seconds": 4.7208874225616455,
+    "final_train_seconds": 7.114576101303101
+  },
+  "base_metrics_table": [
+    {
+      "split": "Train",
+      "FIT_1step": 90.4515,
+      "RMSE_1step": 0.3202,
+      "FIT_sim": 73.5212,
+      "RMSE_sim": 0.888,
+      "Bias_sim": 0.0765
+    },
+    {
+      "split": "Validation",
+      "FIT_1step": 88.1983,
+      "RMSE_1step": 0.3543,
+      "FIT_sim": 65.942,
+      "RMSE_sim": 1.0225,
+      "Bias_sim": -0.1434
+    },
+    {
+      "split": "Test",
+      "FIT_1step": 87.4776,
+      "RMSE_1step": 0.3648,
+      "FIT_sim": 53.9242,
+      "RMSE_sim": 1.3422,
+      "Bias_sim": -0.1858
+    }
+  ],
+  "metrics_table": [
+    {
+      "split": "Train",
+      "FIT_1step": 89.0151,
+      "RMSE_1step": 0.3684,
+      "FIT_sim": 53.4211,
+      "RMSE_sim": 1.5621,
+      "Bias_sim": -0.5139
+    },
+    {
+      "split": "Validation",
+      "FIT_1step": 80.4823,
+      "RMSE_1step": 0.586,
+      "FIT_sim": 29.6988,
+      "RMSE_sim": 2.1107,
+      "Bias_sim": 1.0746
+    },
+    {
+      "split": "Test",
+      "FIT_1step": 82.7364,
+      "RMSE_1step": 0.5029,
+      "FIT_sim": -29.247,
+      "RMSE_sim": 3.7649,
+      "Bias_sim": -0.7779
+    }
+  ],
+  "metrics": {
+    "train": {
+      "fit_1": 89.0151,
+      "fit_sim": 53.4211,
+      "rmse_sim": 1.5621
+    },
+    "validation": {
+      "fit_1": 80.4823,
+      "fit_sim": 29.6988,
+      "rmse_sim": 2.1107
+    },
+    "test": {
+      "fit_1": 82.7364,
+      "fit_sim": -29.247,
+      "rmse_sim": 3.7649
+    }
+  },
+  "comparison": [
+    {
+      "model": "ARX Search V1 best",
+      "val_FIT_sim": 68.95594283365008,
+      "test_FIT_sim": 66.83374279146224,
+      "test_RMSE_sim": 0.9661128722675418,
+      "test_gain_vs_arx_search_best": 0.0
+    },
+    {
+      "model": "NARX V1",
+      "val_FIT_sim": 61.219940654803786,
+      "test_FIT_sim": 54.24905146454996,
+      "test_RMSE_sim": 1.3326972657972955,
+      "test_gain_vs_arx_search_best": -12.584691326912285
+    },
+    {
+      "model": "NARX V2",
+      "val_FIT_sim": 65.94197096065102,
+      "test_FIT_sim": 53.924163707455094,
+      "test_RMSE_sim": 1.3421610482855613,
+      "test_gain_vs_arx_search_best": -12.909579084007149
+    },
+    {
+      "model": "NARX V3",
+      "val_FIT_sim": 65.94197096065102,
+      "test_FIT_sim": 53.924163707455094,
+      "test_RMSE_sim": 1.3421610482855613,
+      "test_gain_vs_arx_search_best": -12.909579084007149
+    },
+    {
+      "model": "NARX V4 closed-loop",
+      "val_FIT_sim": 29.6988,
+      "test_FIT_sim": -29.247,
+      "test_RMSE_sim": 3.7649,
+      "test_gain_vs_arx_search_best": -96.08074279146224
+    }
+  ]
+}

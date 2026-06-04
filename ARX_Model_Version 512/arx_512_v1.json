@@ -1,0 +1,172 @@
+{
+  "model_type": "ARX",
+  "version": "v1_512_raw_ols",
+  "version_number": 1,
+  "notes": "ARX(5,1,2), 6 raw inputs, OLS, no intercept, no normalization, no clip.",
+  "data_source": "CSV:greenhouse_data.csv",
+  "data_config": {
+    "csv_path": "C:\\Users\\minht\\OneDrive\\Desktop\\ARX-Model\\greenhouse_data.csv",
+    "generator_script_path": "C:\\Users\\minht\\OneDrive\\Desktop\\ARX-Model\\data_generator.py",
+    "force_regenerate_from_script": false,
+    "auto_save_generated_csv": true,
+    "generated_days": 365,
+    "generated_sampling_seconds": 300,
+    "generated_seed": 42,
+    "generated_start_date": "2025-01-01"
+  },
+  "split_config": {
+    "train_ratio": 0.6,
+    "val_ratio": 0.2
+  },
+  "model_config": {
+    "na": 5,
+    "nb": 1,
+    "nk": 2,
+    "include_intercept": false,
+    "input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan"
+    ],
+    "output_col": "Soil_Moisture",
+    "simulation_clip": null
+  },
+  "feature_engineering": {
+    "enabled": false,
+    "raw_input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan"
+    ],
+    "input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan"
+    ],
+    "new_features": []
+  },
+  "normalization": {
+    "enabled": false,
+    "method": null,
+    "fit_on": "train",
+    "scaled_columns": [],
+    "stats": {}
+  },
+  "regularization": {
+    "method": "ols",
+    "alpha_grid": [
+      0.0
+    ],
+    "best_alpha": 0.0,
+    "selected_by": "ols",
+    "penalize_intercept": false
+  },
+  "simulation_clip": {
+    "enabled": false,
+    "source": "train Soil_Moisture quantiles",
+    "quantiles": [
+      0.01,
+      0.99
+    ],
+    "bounds_real": [
+      50.5465794049447,
+      64.61272806162447
+    ],
+    "bounds_model": [
+      50.5465794049447,
+      64.61272806162447
+    ]
+  },
+  "param_names": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "b_Temperature_1",
+    "b_Humidity_1",
+    "b_Light_1",
+    "b_Drip_1",
+    "b_Mist_1",
+    "b_Fan_1"
+  ],
+  "theta_hat": [
+    0.8930627118971215,
+    0.17793852682945355,
+    -0.3251232259946891,
+    0.3048634907742267,
+    -0.08272914800239725,
+    0.013741909734377035,
+    0.012613654012947137,
+    -0.00031539207831717827,
+    2.7898603053301048,
+    0.02017925678500876,
+    0.029939425823653144
+  ],
+  "sigma2": 0.18565524876073936,
+  "matrix_info": {
+    "x_train_shape": [
+      63067,
+      11
+    ],
+    "y_train_shape": [
+      63067
+    ],
+    "rank_x_train": 11,
+    "condition_number_xtx": 10630693.295125367,
+    "sigma2_ols": 0.18565524876073936,
+    "sigma2_selected": 0.18565524876073936
+  },
+  "alpha_search": [
+    {
+      "alpha": 0.0,
+      "train_FIT_sim": 48.73511703726767,
+      "val_FIT_1step": 85.5019389212391,
+      "val_FIT_12step": 65.52673088690636,
+      "val_FIT_sim": 45.30798715812839,
+      "val_RMSE_sim": 1.6420197797860911,
+      "test_FIT_sim": 34.11707265135199,
+      "test_RMSE_sim": 1.9190848699710104,
+      "theta_l2": 2.9697956558374887
+    }
+  ],
+  "ar_roots": [],
+  "metrics": {
+    "train": {
+      "fit_1": 87.1528353411193,
+      "fit_12": 69.09971287077032,
+      "fit_sim": 48.73511703726767,
+      "rmse_sim": 1.7192079792596069
+    },
+    "validation": {
+      "fit_1": 85.5019389212391,
+      "fit_12": 65.52673088690636,
+      "fit_sim": 45.30798715812839,
+      "rmse_sim": 1.6420197797860911
+    },
+    "test": {
+      "fit_1": 85.15936418808813,
+      "fit_12": 62.836340311038505,
+      "fit_sim": 34.11707265135199,
+      "rmse_sim": 1.9190848699710104
+    }
+  },
+  "comparison_512": [
+    {
+      "version": "512 V1",
+      "val_FIT_sim": 45.308,
+      "test_FIT_sim": 34.1171,
+      "test_gain_vs_v1": 0.0,
+      "test_gain_vs_previous": NaN
+    }
+  ]
+}
