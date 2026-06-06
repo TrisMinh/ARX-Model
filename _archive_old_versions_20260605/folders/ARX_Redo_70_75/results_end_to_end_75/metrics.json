@@ -1,0 +1,234 @@
+{
+  "config": {
+    "days": 365,
+    "sampling_seconds": 300,
+    "seed": 2026,
+    "train_ratio": 0.6,
+    "val_ratio": 0.2,
+    "clip_quantiles": [
+      0.01,
+      0.99
+    ],
+    "y_lags": [
+      1,
+      2,
+      3,
+      6,
+      12
+    ],
+    "input_lags": [
+      2,
+      3,
+      6,
+      12,
+      24
+    ],
+    "n_step": 12,
+    "target_fit_sim": 75.0,
+    "validation_blocks": 4,
+    "validation_std_penalty": 0.5
+  },
+  "data_policy": {
+    "generator": "identifiable synthetic greenhouse",
+    "actuator_policy": "clock/weather/random persistent excitation; no Soil_Moisture feedback used to create actuator schedule",
+    "target_leakage": false,
+    "split": "time ordered 60/20/20",
+    "selection_metric": "validation robust score = mean(block FIT_sim) - 0.5*std(block FIT_sim)"
+  },
+  "data_summary": {
+    "rows": 105120,
+    "start": "2025-01-01 00:00:00",
+    "end": "2025-12-31 23:55:00",
+    "soil_mean": 58.341594745656266,
+    "soil_std": 2.909319073255812,
+    "drip_on_pct": 3.5283485540334856,
+    "mist_on_pct": 22.750190258751903,
+    "fan_on_pct": 34.37785388127853
+  },
+  "input_cols": [
+    "Temperature",
+    "Humidity",
+    "Light",
+    "Drip",
+    "Mist",
+    "Fan",
+    "Light_log",
+    "Temp_x_Humi",
+    "Temp_x_Light",
+    "Humi_x_Light",
+    "SP_Center",
+    "SP_Width",
+    "Month_sin",
+    "Month_cos",
+    "Season_sin",
+    "Season_cos"
+  ],
+  "leaderboard": [
+    {
+      "model": "delta_nnarx_mlp64_a01_rs1",
+      "hidden_layer_sizes": [
+        64,
+        32
+      ],
+      "alpha": 0.01,
+      "learning_rate_init": 0.0006,
+      "val_FIT_1step": 97.00617329901021,
+      "val_FIT_sim": 86.45303438115582,
+      "val_robust_score": 81.10637393072068,
+      "val_block_mean_FIT_sim": 82.06285490712271,
+      "val_block_std_FIT_sim": 1.9129619528040755,
+      "val_block_FIT_sim": [
+        81.49471208170485,
+        84.13974944684672,
+        83.41362164188398,
+        79.20333645805526
+      ],
+      "test_FIT_1step": 85.89389964147108,
+      "test_FIT_sim": 76.29455891114262,
+      "test_RMSE_sim": 0.3305579728250043
+    },
+    {
+      "model": "delta_nnarx_mlp64_a01",
+      "hidden_layer_sizes": [
+        64,
+        32
+      ],
+      "alpha": 0.01,
+      "learning_rate_init": 0.0006,
+      "val_FIT_1step": 97.00697822267608,
+      "val_FIT_sim": 86.56999008421009,
+      "val_robust_score": 80.48712171146754,
+      "val_block_mean_FIT_sim": 82.09762754077624,
+      "val_block_std_FIT_sim": 3.221011658617416,
+      "val_block_FIT_sim": [
+        80.3314196106517,
+        85.1266096355562,
+        85.2350693310165,
+        77.69741158588053
+      ],
+      "test_FIT_1step": 85.88891880350833,
+      "test_FIT_sim": 66.70032293095235,
+      "test_RMSE_sim": 0.4643437642189949
+    },
+    {
+      "model": "delta_nnarx_mlp96_a01",
+      "hidden_layer_sizes": [
+        96,
+        48
+      ],
+      "alpha": 0.01,
+      "learning_rate_init": 0.0005,
+      "val_FIT_1step": 96.99676195400993,
+      "val_FIT_sim": 79.72589600930232,
+      "val_robust_score": 67.19453803301252,
+      "val_block_mean_FIT_sim": 72.93582330017958,
+      "val_block_std_FIT_sim": 11.482570534334103,
+      "val_block_FIT_sim": [
+        81.496748697693,
+        79.45116498430576,
+        77.60448435955402,
+        53.19089515916551
+      ],
+      "test_FIT_1step": 85.87271334969616,
+      "test_FIT_sim": 55.551381969176106,
+      "test_RMSE_sim": 0.6198089719599594
+    },
+    {
+      "model": "delta_nnarx_mlp64_a03",
+      "hidden_layer_sizes": [
+        64,
+        32
+      ],
+      "alpha": 0.03,
+      "learning_rate_init": 0.0006,
+      "val_FIT_1step": 96.96762212536778,
+      "val_FIT_sim": 68.97159139252257,
+      "val_robust_score": 52.68224677295847,
+      "val_block_mean_FIT_sim": 59.14111954547793,
+      "val_block_std_FIT_sim": 12.917745545038914,
+      "val_block_FIT_sim": [
+        73.3687915723849,
+        64.5336245456962,
+        60.36486910157662,
+        38.297192962254
+      ],
+      "test_FIT_1step": 85.87356531140487,
+      "test_FIT_sim": 56.00743168676509,
+      "test_RMSE_sim": 0.6134496357388552
+    }
+  ],
+  "selected_by_validation": {
+    "model": "delta_nnarx_mlp64_a01_rs1",
+    "hidden_layer_sizes": [
+      64,
+      32
+    ],
+    "alpha": 0.01,
+    "learning_rate_init": 0.0006,
+    "val_FIT_1step": 97.00617329901021,
+    "val_FIT_sim": 86.45303438115582,
+    "val_robust_score": 81.10637393072068,
+    "val_block_mean_FIT_sim": 82.06285490712271,
+    "val_block_std_FIT_sim": 1.9129619528040755,
+    "val_block_FIT_sim": [
+      81.49471208170485,
+      84.13974944684672,
+      83.41362164188398,
+      79.20333645805526
+    ],
+    "test_FIT_1step": 85.89389964147108,
+    "test_FIT_sim": 76.29455891114262,
+    "test_RMSE_sim": 0.3305579728250043
+  },
+  "selected_metrics": {
+    "validation": {
+      "name": "validation",
+      "metrics_1step": {
+        "FIT": 97.00617329901021,
+        "RMSE": 0.06755578939624475,
+        "MAE": 0.03825872903687056,
+        "Bias": 0.0006753302348514692,
+        "R2": 0.9991037001684441
+      },
+      "metrics_sim": {
+        "FIT": 86.45303438115582,
+        "RMSE": 0.30568768593126655,
+        "MAE": 0.23630911854479883,
+        "Bias": -0.07101531240621864,
+        "R2": 0.9816479722521854
+      },
+      "metrics_12": {
+        "FIT": 92.53471298510995,
+        "RMSE": 0.16845442563315324,
+        "MAE": 0.12468190963786925,
+        "Bias": -0.012592778272765608,
+        "R2": 0.9944269489785313
+      }
+    },
+    "test": {
+      "name": "test",
+      "metrics_1step": {
+        "FIT": 85.89389964147108,
+        "RMSE": 0.19670099879192499,
+        "MAE": 0.08289897349427706,
+        "Bias": -0.051329484162014764,
+        "R2": 0.980101793267511
+      },
+      "metrics_sim": {
+        "FIT": 76.29455891114262,
+        "RMSE": 0.3305579728250043,
+        "MAE": 0.24828600449131655,
+        "Bias": -0.1219256132425915,
+        "R2": 0.9438052062782712
+      },
+      "metrics_12": {
+        "FIT": 82.20490477247597,
+        "RMSE": 0.24814179084831284,
+        "MAE": 0.16133210183327404,
+        "Bias": -0.0673441599618902,
+        "R2": 0.9683334585843352
+      }
+    }
+  },
+  "target_met": true
+}

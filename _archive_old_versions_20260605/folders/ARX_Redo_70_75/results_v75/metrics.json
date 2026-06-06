@@ -1,0 +1,178 @@
+{
+  "config": {
+    "csv_path": "C:\\Users\\minht\\OneDrive\\Desktop\\ARX-Model\\greenhouse_data.csv",
+    "train_ratio": 0.6,
+    "val_ratio": 0.2,
+    "na": 5,
+    "nb": 3,
+    "nk": 2,
+    "clip_quantiles": [
+      0.01,
+      0.99
+    ],
+    "shrink_grid": [
+      0.8,
+      0.9,
+      1.0,
+      1.1
+    ],
+    "causal_input_lags": [
+      2,
+      3,
+      6,
+      12,
+      24,
+      36,
+      72
+    ],
+    "diagnostic_input_lags": [
+      -24,
+      -12,
+      -6,
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      6,
+      12,
+      24,
+      36,
+      72
+    ]
+  },
+  "arx_train60": {
+    "validation": {
+      "FIT": 68.78755294643861,
+      "RMSE": 0.9370921415098541,
+      "MAE": 0.7337523419370803,
+      "Bias": 0.01838883883831287,
+      "R2": 0.9025783148928627
+    },
+    "test": {
+      "FIT": 66.49222223827546,
+      "RMSE": 0.9760384353989432,
+      "MAE": 0.7602128067754668,
+      "Bias": 0.00794054895700157,
+      "R2": 0.8877228829470878
+    }
+  },
+  "leaderboard": [
+    {
+      "track": "causal_history_train60",
+      "shrink": 0.8,
+      "val_FIT_sim": 72.31285656403918,
+      "val_RMSE_sim": 0.83125185571551,
+      "test_FIT_sim": 71.06598178127896,
+      "test_RMSE_sim": 0.8428107071983735,
+      "test_Bias_sim": -0.001859965794802716
+    },
+    {
+      "track": "causal_history_train60",
+      "shrink": 0.9,
+      "val_FIT_sim": 72.43614778374754,
+      "val_RMSE_sim": 0.8275502800938486,
+      "test_FIT_sim": 71.20848948819092,
+      "test_RMSE_sim": 0.838659641130199,
+      "test_Bias_sim": -0.0033440250668347053
+    },
+    {
+      "track": "causal_history_train60",
+      "shrink": 1.0,
+      "val_FIT_sim": 72.48624194800699,
+      "val_RMSE_sim": 0.8260463016463252,
+      "test_FIT_sim": 71.24664103873614,
+      "test_RMSE_sim": 0.8375483355710236,
+      "test_Bias_sim": -0.004982110088244932
+    },
+    {
+      "track": "causal_history_train60",
+      "shrink": 1.1,
+      "val_FIT_sim": 72.46282423425137,
+      "val_RMSE_sim": 0.8267493722993517,
+      "test_FIT_sim": 71.18229900711046,
+      "test_RMSE_sim": 0.8394225361320067,
+      "test_Bias_sim": -0.0067808901802758215
+    },
+    {
+      "track": "diagnostic_future_actuator_train60",
+      "shrink": 0.8,
+      "val_FIT_sim": 78.41906371634532,
+      "val_RMSE_sim": 0.6479250333411513,
+      "test_FIT_sim": 76.93769146565518,
+      "test_RMSE_sim": 0.6717753620851016,
+      "test_Bias_sim": -0.0033111403568326443
+    },
+    {
+      "track": "diagnostic_future_actuator_train60",
+      "shrink": 0.9,
+      "val_FIT_sim": 78.89700647094409,
+      "val_RMSE_sim": 0.6335757451018305,
+      "test_FIT_sim": 77.38174587748333,
+      "test_RMSE_sim": 0.6588406286499339,
+      "test_Bias_sim": -0.006057614999913888
+    },
+    {
+      "track": "diagnostic_future_actuator_train60",
+      "shrink": 1.0,
+      "val_FIT_sim": 79.15615600050982,
+      "val_RMSE_sim": 0.6257952917712956,
+      "test_FIT_sim": 77.57919891283818,
+      "test_RMSE_sim": 0.6530890758891698,
+      "test_Bias_sim": -0.009344842619869047
+    },
+    {
+      "track": "diagnostic_future_actuator_train60",
+      "shrink": 1.1,
+      "val_FIT_sim": 79.18935788498372,
+      "val_RMSE_sim": 0.6247984706963439,
+      "test_FIT_sim": 77.5315897277606,
+      "test_RMSE_sim": 0.654475870168521,
+      "test_Bias_sim": -0.013389364458153965
+    }
+  ],
+  "best_by_validation": {
+    "causal_history_train60": {
+      "track": "causal_history_train60",
+      "shrink": 1.0,
+      "val_FIT_sim": 72.48624194800699,
+      "val_RMSE_sim": 0.8260463016463252,
+      "test_FIT_sim": 71.24664103873614,
+      "test_RMSE_sim": 0.8375483355710236,
+      "test_Bias_sim": -0.004982110088244932
+    },
+    "diagnostic_future_actuator_train60": {
+      "track": "diagnostic_future_actuator_train60",
+      "shrink": 1.1,
+      "val_FIT_sim": 79.18935788498372,
+      "val_RMSE_sim": 0.6247984706963439,
+      "test_FIT_sim": 77.5315897277606,
+      "test_RMSE_sim": 0.654475870168521,
+      "test_Bias_sim": -0.013389364458153965
+    }
+  },
+  "causal_refit80": {
+    "track": "causal_history_refit80_selected_after_validation",
+    "selected_shrink": 1.0,
+    "arx_test": {
+      "FIT": 66.36719796223491,
+      "RMSE": 0.979680231630291,
+      "MAE": 0.7624053393787379,
+      "Bias": 0.006450393208785901,
+      "R2": 0.8868834627088505
+    },
+    "hybrid_test": {
+      "FIT": 71.30754697147059,
+      "RMSE": 0.8357742241478382,
+      "MAE": 0.6533098940541465,
+      "Bias": 0.014868682003612353,
+      "R2": 0.9176743139205633
+    }
+  },
+  "audit_notes": {
+    "causal_track": "No target future leakage. Residual uses ARX simulated trajectory and lagged inputs only.",
+    "diagnostic_track": "Uses negative input lags, including future actuator states. Treat as upper bound, not deployment model."
+  }
+}

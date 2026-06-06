@@ -1,0 +1,32 @@
+{
+  "no_phase_identification": {
+    "removed": [
+      "Phase_identification"
+    ],
+    "n_input_cols": 16,
+    "arx_selected_model": "ARX_na12_nb6_nk1_alpha10",
+    "arx_fit_sim": 82.49572822125447,
+    "hybrid_fit_sim": 83.43261705314913,
+    "hybrid_rmse_sim": 0.1590621100812152,
+    "gain_fit_sim": 0.9368888318946631,
+    "selected_residual": "hgb_leaf15_l2_0.01|0.25",
+    "selected_val_robust": 77.04930985024617
+  },
+  "no_time_cycle_no_phase": {
+    "removed": [
+      "Day_cos",
+      "Day_sin",
+      "Hour_cos",
+      "Hour_sin",
+      "Phase_identification"
+    ],
+    "n_input_cols": 12,
+    "arx_selected_model": "ARX_na12_nb6_nk1_alpha0.1",
+    "arx_fit_sim": 77.35157872101192,
+    "hybrid_fit_sim": 82.03956104655057,
+    "hybrid_rmse_sim": 0.1724367286665239,
+    "gain_fit_sim": 4.6879823255386555,
+    "selected_residual": "hgb_leaf31_l2_0.05|0.5",
+    "selected_val_robust": 77.71515158633521
+  }
+}

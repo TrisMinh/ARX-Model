@@ -1,0 +1,4 @@
+case,family,input_set,n_input_cols,selected_model,selection_policy,test_FIT_1step_20s,test_FIT_12_4min,test_FIT_60_20min,test_FIT_sim,test_RMSE_sim,note
+ARX baseline cũ chỉ cảm biến trong,ARX tuyến tính,inside_only,19,ARX_na5_nb1_nk2_alpha0,validation robust score,95.03130742125515,86.46454205911341,76.20071982636145,-8.543473579200956,1.0420184358988407,"Order ARX(5,1,2) để so với cách cũ"
+ARX robust chỉ cảm biến trong,ARX tuyến tính,inside_only,19,ARX_na12_nb3_nk2_alpha0.1,validation robust score,95.37314823204042,90.83889202204006,88.04670256366829,78.95030564005697,0.2020964211546532,Không dùng Temperature_Out/Humidity_Out
+ARX robust có cảm biến ngoài,ARX tuyến tính,outdoor,23,ARX_na24_nb6_nk1_alpha1,validation robust score,95.55602267050327,92.14035241540607,88.83669417351841,78.95286145535584,0.20210016742350254,"Có thêm Temperature_Out, Humidity_Out, Outdoor_Dryness và VPD_Proxy_Out"

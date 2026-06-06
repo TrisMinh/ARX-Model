@@ -1,0 +1,6 @@
+case,dataset,family,selected_model,selection_policy,test_FIT_1step,test_FIT_12,test_FIT_sim,test_RMSE_sim,mpc_note
+PBL report previous ARX,current feedback data,Linear ARX,"ARX(5,1,2), LS, report split 70/15/15",previous report,85.85,67.16,66.42,0.978,baseline in PBL report
+ARX robust search,current feedback data,Linear ARX,ARX_na5_nb1_nk2_alpha0,validation robust score,85.95519536914301,67.16010134795994,66.41757488973374,0.9782128165768131,MPC-friendly linear plant model
+Clean NARX,current feedback data,Nonlinear NNARX,Delta_NNARX_MLP64_small_a10,validation FIT_sim,88.88520149869568,67.9503464732507,64.67408098303582,1.0290225053849094,Not plug-compatible with current linear/RLS MPC
+ARX robust search,identifiable protocol data,Linear ARX,ARX_na12_nb5_nk2_alpha0,validation robust score,85.89464386483289,82.21048764444873,76.22897000793488,0.3314035742270799,MPC-friendly linear plant model
+Delta-NNARX identifiable protocol,identifiable protocol data,Nonlinear NNARX,delta_nnarx_mlp64_a01_rs1,validation robust score,85.89389964147108,82.20490477247597,76.29455891114262,0.3305579728250043,Needs NMPC/local linearization for direct control use

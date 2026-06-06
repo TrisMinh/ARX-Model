@@ -1,0 +1,6 @@
+case,dataset,model_family,selection,FIT_1step_test,FIT_12_test,FIT_sim_test,RMSE_sim_test,production_note
+PBL report previous result,old simulated feedback data,linear ARX,"ARX(5,1,2), LS, report split 70/15/15",85.85,67.16,66.42,0.978,baseline in report
+ARX robust search rerun,old simulated feedback data,linear ARX,ARX_na5_nb1_nk2_alpha0,85.95519536914301,67.16010134795994,66.41757488973374,0.9782128165768131,"linear, MPC-friendly"
+ARX robust search rerun,new identifiable data,linear ARX,ARX_na12_nb5_nk2_alpha0,85.89464386483289,82.21048764444873,76.22897000793488,0.3314035742270799,"linear, MPC-friendly"
+Clean NNARX rerun,old simulated feedback data,nonlinear NNARX,Delta_NNARX_MLP64_small_a10,88.88520149869568,67.9503464732507,64.67408098303582,1.0290225053849094,not better in free-run on old data
+End-to-end Delta-NNARX,new identifiable data,nonlinear NNARX,delta_nnarx_mlp64_a01_rs1,85.89389964147108,82.20490477247597,76.29455891114262,0.3305579728250043,"target met on new identifiable data, but needs NMPC/local linearization for MPC"
