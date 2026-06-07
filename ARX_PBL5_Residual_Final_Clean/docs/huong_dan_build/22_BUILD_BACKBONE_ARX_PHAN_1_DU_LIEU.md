@@ -50,7 +50,6 @@ Output:
 
 - `FIT`;
 - `RMSE`;
-- `MAE`;
 - `Bias`.
 
 Công thức FIT:

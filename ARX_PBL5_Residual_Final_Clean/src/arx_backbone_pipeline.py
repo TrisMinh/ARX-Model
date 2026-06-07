@@ -95,7 +95,6 @@ def fit_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
     return {
         "FIT": float(fit),
         "RMSE": float(np.sqrt(np.mean(residual**2))),
-        "MAE": float(np.mean(np.abs(residual))),
         "Bias": float(np.mean(residual)),
     }
 

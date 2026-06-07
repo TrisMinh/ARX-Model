@@ -8,6 +8,11 @@ Docs đã tách theo vai trò để không lẫn lý thuyết với hướng d�
 
 Dùng để hiểu:
 
+- nền tảng nhận dạng hệ thống;
+- công thức ARX và ma trận hồi quy;
+- `FIT`, `RMSE`, `Bias`, `R2`;
+- `one-step`, `multi-step`, `free-run simulation`;
+- leakage và cách chia dữ liệu công bằng;
 - ARX là gì;
 - Hybrid residual là gì;
 - vì sao không gọi model này là ARX thuần;

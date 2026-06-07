@@ -1,0 +1,165 @@
+{
+  "config": {
+    "days": 4,
+    "sampling_seconds": 5,
+    "seed": 505031,
+    "train_ratio": 0.7,
+    "val_ratio": 0.15,
+    "five_minute_seconds": 300,
+    "control_horizon_seconds": 1200,
+    "soil_low_sp": 55.0,
+    "soil_high_sp": 65.0,
+    "width_cm": 30.0,
+    "length_cm": 50.0,
+    "height_cm": 30.0,
+    "front_temp_gain": 0.9,
+    "front_temp_step": 0.3,
+    "front_humi_drop": 3.2,
+    "front_humi_step": 0.9
+  },
+  "grid": "quick",
+  "data_policy": {
+    "source_data": "native generated 5s physical protocol",
+    "split": "time split 70/15/15",
+    "selection_metric": "validation free-run FIT",
+    "model_family": "linear ARX",
+    "integration_policy": "standalone only"
+  },
+  "input_cols": [
+    "Temperature_In",
+    "Humidity_In",
+    "Light_In",
+    "Drip",
+    "Mist",
+    "Fan",
+    "Light_log",
+    "TempIn_x_HumiIn",
+    "TempIn_x_Light",
+    "HumiIn_x_Light",
+    "Indoor_Dryness",
+    "VPD_Proxy_In",
+    "Hour_sin",
+    "Hour_cos",
+    "Day_sin",
+    "Day_cos"
+  ],
+  "clip_scaled": [
+    -1.0737120651408314,
+    5.042231193623219
+  ],
+  "selected_by_validation": {
+    "model": "ARX_na96_nb16_nk2_alpha10",
+    "na": 96,
+    "nb": 16,
+    "nk": 2,
+    "alpha": 10.0,
+    "output_memory_seconds": 480,
+    "input_delay_seconds": 10,
+    "input_memory_seconds": 80,
+    "n_input_cols": 16,
+    "n_params": 353,
+    "val_FIT_1step": 84.08455270907872,
+    "val_FIT_free_run": 57.33908403004029,
+    "val_RMSE_free_run": 0.45518728253366175
+  },
+  "validation": {
+    "lag_steps": 96,
+    "metrics_1step": {
+      "FIT": 84.08455270907872,
+      "RMSE": 0.1698160725794896,
+      "Bias": 0.027023534946751467
+    },
+    "metrics_5min_chunked": {
+      "FIT": 80.99466809219173,
+      "RMSE": 0.20278480168726923,
+      "Bias": 0.02823501922312898
+    },
+    "metrics_20min_chunked": {
+      "FIT": 73.44910013969096,
+      "RMSE": 0.28329518205253085,
+      "Bias": 0.02471664505026866
+    },
+    "metrics_free_run": {
+      "FIT": 57.33908403004029,
+      "RMSE": 0.45518728253366175,
+      "Bias": 0.1757339357166477
+    }
+  },
+  "test": {
+    "lag_steps": 96,
+    "metrics_1step": {
+      "FIT": 93.08867217863917,
+      "RMSE": 0.0656643850758881,
+      "Bias": 0.005613171993615447
+    },
+    "metrics_5min_chunked": {
+      "FIT": 88.8419817349123,
+      "RMSE": 0.10601210461729302,
+      "Bias": 0.00502884060402049
+    },
+    "metrics_20min_chunked": {
+      "FIT": 85.20666896377087,
+      "RMSE": 0.14055113732497923,
+      "Bias": 0.004992057412311621
+    },
+    "metrics_free_run": {
+      "FIT": 76.61195676037556,
+      "RMSE": 0.22220932317978662,
+      "Bias": -0.0006166267451927548
+    }
+  },
+  "data_audit": {
+    "rows": 69120,
+    "start": "2026-01-01 00:00:00",
+    "end": "2026-01-04 23:59:55",
+    "sampling_seconds": 5,
+    "missing_total": 0,
+    "duplicate_timestamps": 0,
+    "median_sampling_seconds": 5.0,
+    "irregular_sampling_count": 0,
+    "soil_mean": 55.04585935206142,
+    "soil_std": 0.8353090666983873,
+    "soil_min": 54.00649384863169,
+    "soil_max": 60.99518891805512,
+    "temperature_in_range": [
+      19.66966419264054,
+      36.333635983236064
+    ],
+    "humidity_in_range": [
+      56.16792630663148,
+      89.12663580584287
+    ],
+    "drip_on_pct": 1.9241898148148147,
+    "fan_on_pct": 38.94241898148148,
+    "mist_on_pct": 9.877025462962962,
+    "split": {
+      "train": {
+        "rows": 48384,
+        "start": "2026-01-01 00:00:00",
+        "end": "2026-01-03 19:11:55",
+        "soil_mean": 54.933959800839844,
+        "soil_std": 0.7181461544652915,
+        "drip_on_pct": 1.9799933862433863,
+        "fan_on_pct": 43.46891534391534
+      },
+      "validation": {
+        "rows": 10368,
+        "start": "2026-01-03 19:12:00",
+        "end": "2026-01-04 09:35:55",
+        "soil_mean": 55.4046714022858,
+        "soil_std": 1.0644804928887575,
+        "drip_on_pct": 0.9741512345679012,
+        "fan_on_pct": 7.137345679012346
+      },
+      "test": {
+        "rows": 10368,
+        "start": "2026-01-04 09:36:00",
+        "end": "2026-01-04 23:59:55",
+        "soil_mean": 55.20924520753774,
+        "soil_std": 0.9475529503523653,
+        "drip_on_pct": 2.6138117283950617,
+        "fan_on_pct": 49.623842592592595
+      }
+    }
+  }
+}

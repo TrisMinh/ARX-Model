@@ -56,7 +56,19 @@ Chưa. Đây là dữ liệu mô phỏng vật lý có kiểm soát. Khi có d�
 ARX backbone vẫn phù hợp MPC tuyến tính. Hybrid residual có thể dùng như tầng dự báo nâng cao hoặc tầng hiệu chỉnh. Nếu đưa residual vào tối ưu trực tiếp thì bài toán trở thành gần nonlinear MPC hơn, nên em trình bày rõ ranh giới này.
 ```
 
-## 10. Câu kết luận an toàn
+## 10. Áp dụng thực tế lấy biến đâu để dự đoán?
+
+```text
+Soil_Moisture, Temperature_In, Humidity_In, Light_In lấy từ cảm biến. Drip, Mist, Fan lấy từ lệnh điều khiển mà hệ thống phát ra. Khi dự đoán nhiều bước, Soil_Moisture tương lai do model tự dự đoán, Drip/Mist/Fan tương lai do controller đưa ra dưới dạng chuỗi lệnh giả định/kế hoạch, còn Temperature/Humidity/Light tương lai trong horizon ngắn 4-20 phút được giữ bằng giá trị đo mới nhất. Sau mỗi 20 giây hệ thống đọc cảm biến mới và dự đoán lại.
+```
+
+## 11. FIT_sim có phải là kết quả tự tưới không?
+
+```text
+Không. FIT_sim là đánh giá mô hình mô phỏng Soil_Moisture dưới chuỗi input đã biết trong test. Nó chưa phải kết quả controller tự chọn lệnh tưới. ARX/Hybrid là mô hình dự đoán, còn quyết định tưới thuộc controller/MPC hoặc rule điều khiển.
+```
+
+## 12. Câu kết luận an toàn
 
 ```text
 Em chọn Hybrid ARX residual correction làm bản kết quả chính vì nó giữ ARX làm backbone nhưng cải thiện free-run simulation từ 82.50 lên 83.43. Em không gọi đây là ARX thuần, và toàn bộ quá trình chọn residual dùng validation, không chọn theo test.
