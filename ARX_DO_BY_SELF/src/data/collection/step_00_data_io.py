@@ -134,6 +134,21 @@ def build_data_files(output_dir: Path, source_dir: Path | None = None) -> list[P
     return paths
 
 
+# Đọc toàn bộ CSV thật rồi ghép thành một bảng nguồn.
+def load_source_data(source_dir: Path | None = None) -> pd.DataFrame:
+    frames: list[pd.DataFrame] = []
+    for source_path in input_csv_paths(source_dir):
+        frames.append(format_model_data(load_model_csv(source_path)))
+
+    if not frames:
+        raise FileNotFoundError(f"No CSV files found in {input_data_dir(source_dir)}")
+
+    data = pd.concat(frames, ignore_index=True)
+    data["Timestamp"] = pd.to_datetime(data["Timestamp"], errors="coerce")
+    data = data.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True)
+    return data.loc[:, MODEL_COLS]
+
+
 # Tách data chuẩn thành các file data đầu vào giống bản 5s chuẩn.
 def build_reference_data_files(output_dir: Path, data_path: Path) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -178,7 +178,8 @@ có truyền --raw-dir
 Hàm:
 
 ```text
-build_data_files()
+load_source_data()
+build_collection_session_files()
 ```
 
 Thuật toán:
@@ -186,11 +187,22 @@ Thuật toán:
 ```text
 đọc toàn bộ CSV trong thư mục raw-dir
 kiểm tra đủ 8 cột bắt buộc
-copy sang data/_01_data/
-đặt tên file theo thứ tự
+ghép lại để phân tích profile thực tế
+sinh 4 phiên thu đại diện theo kịch bản lý thuyết
+thêm lỗi raw nhỏ như lệch timestamp, missing, duplicate
+ghi vào data/_01_data/
 ```
 
-Trường hợp này dùng khi bạn gửi data thật.
+4 file raw được tạo:
+
+```text
+01_morning_raw.csv
+02_noon_raw.csv
+03_afternoon_raw.csv
+04_night_raw.csv
+```
+
+Trường hợp này dùng khi bạn gửi data thật. Data thật không bị copy thẳng sang `_01_data`; nó được dùng làm nền để mô phỏng quá trình sinh viên thu các phiên đại diện.
 
 ## 6. Ghi File Tổng Hợp Raw
 
@@ -312,9 +324,11 @@ Thuật toán:
 ```text
 lấy data sạch sau clean
 phân tích median, q10, q90 của Temperature, Humidity, Light, Soil_Moisture
+ước lượng tác động thật của Mist, Fan, Drip từ các đoạn thiết bị bật
 lấy mẫu bật/tắt Drip, Mist, Fan từ data sạch
 sinh nền Temperature, Humidity, Light dựa trên profile đã phân tích
-sinh Soil_Moisture dựa trên soil0 và mẫu thiết bị đã phân tích
+sinh Humidity theo phản ứng Mist/Fan đã đo
+sinh Soil_Moisture theo phản ứng Drip/Mist/Fan đã đo
 lặp lại thành nhiều ngày
 ghi mini_greenhouse_5s_data.csv
 ```
@@ -329,6 +343,9 @@ Humidity median, q10, q90
 Light median, q10, q90
 Soil_Moisture median, q10, q90
 mẫu bật/tắt Drip, Mist, Fan
+Mist làm Humidity tăng bao nhiêu
+Fan làm Humidity giảm bao nhiêu
+Drip làm Soil_Moisture tăng bao nhiêu
 ngày bắt đầu của data
 soil0 = median(Soil_Moisture)
 ```
@@ -339,6 +356,7 @@ soil0 = median(Soil_Moisture)
 median dùng làm nền
 q10 và q90 dùng để ước lượng biên dao động
 mẫu thiết bị dùng để chèn lại lịch bật/tắt
+phản ứng thiết bị dùng để data sinh ra giống data thực tế hơn
 soil0 dùng làm độ ẩm đất ban đầu
 ```
 
@@ -400,7 +418,26 @@ Khi chạy:
 python scripts/01_build_data.py --raw-dir <thu_muc_csv_that>
 ```
 
-pipeline sẽ dùng data thật bạn đưa vào.
+pipeline sẽ dùng data thật bạn đưa vào để tạo các phiên thu đại diện:
+
+```text
+morning
+noon
+afternoon
+night
+```
+
+Các phiên này nằm trong:
+
+```text
+data/_01_data/
+```
+
+Sau đó pipeline clean các phiên này sang:
+
+```text
+data/_02_clean_data/
+```
 
 Lúc đó dữ liệu 0h-7h được sinh bằng thuật toán trong:
 
@@ -505,6 +542,27 @@ light_gain = q90(Light) - q10(Light)
 
 Nghĩa là nếu bạn đo ngoài thực tế độ ẩm không khí khoảng 55, profile sinh ra cũng sẽ bám vùng đó, không tự nhảy về một mức khác.
 
+Sau khi có Humidity nền, code tiếp tục chỉnh Humidity theo Mist/Fan:
+
+```text
+humidity_response()
+```
+
+Ý tưởng:
+
+```text
+Mist bật  -> Humidity tăng dần về vùng ẩm cao
+Fan bật   -> Humidity giảm dần về nền môi trường
+Không bật -> Humidity quay chậm về nền ngày/đêm
+```
+
+Mức tăng/giảm được đo từ data sạch:
+
+```text
+mist_humidity_gain = Humidity peak sau khi Mist bật - Humidity trước khi bật
+fan_humidity_drop  = Humidity trước khi Fan bật - Humidity thấp nhất sau khi Fan bật
+```
+
 Các biến có nhiễu nhỏ để data không bị quá đều:
 
 ```text
@@ -570,6 +628,14 @@ Mist template = cột Mist trong data sạch
 Fan template = cột Fan trong data sạch
 ```
 
+Trước khi sinh Soil, code đo tác động tưới từ data sạch:
+
+```text
+drip_soil_gain = Soil_Moisture cao nhất sau khi Drip bật - Soil_Moisture trước khi bật
+```
+
+Nếu có phiên đất quá khô bất thường, code ưu tiên các phiên Soil_Moisture ở vùng thực tế hơn để tránh làm phản ứng bơm bị phóng đại.
+
 Các thành phần chính:
 
 ```text
@@ -586,10 +652,10 @@ slow_balance
 kéo Soil_Moisture nhẹ về vùng nền
 ```
 
-Sau đó giá trị được giới hạn trong khoảng hợp lý:
+Sau đó giá trị được giới hạn trong khoảng vật lý của sensor:
 
 ```text
-Soil_Moisture: 40 -> 82
+Soil_Moisture: 0 -> 100
 ```
 
 Sensor đo cũng có làm mượt:

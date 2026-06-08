@@ -3,12 +3,76 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from data.collection.step_00_data_io import ACTUATOR_COLS, MODEL_COLS, SAMPLE_SECONDS, SENSOR_RANGES, format_model_data
+from pathlib import Path
+
+from data.collection.step_00_data_io import (
+    ACTUATOR_COLS,
+    MODEL_COLS,
+    SAMPLE_SECONDS,
+    SENSOR_RANGES,
+    format_model_data,
+    inject_collection_artifacts,
+)
 
 
 # Đổi Timestamp thành giờ trong ngày.
 def hour_of_day(index: pd.DatetimeIndex) -> np.ndarray:
     return index.hour.to_numpy() + index.minute.to_numpy() / 60.0 + index.second.to_numpy() / 3600.0
+
+
+# Lấy các đoạn liên tục mà thiết bị đang bật.
+def active_blocks(data: pd.DataFrame, actuator: str) -> list[tuple[int, int]]:
+    state = data[actuator].to_numpy(dtype=float) >= 0.5
+    blocks: list[tuple[int, int]] = []
+    start: int | None = None
+
+    for i, active in enumerate(state):
+        if active and start is None:
+            start = i
+        elif not active and start is not None:
+            blocks.append((start, i - 1))
+            start = None
+
+    if start is not None:
+        blocks.append((start, len(state) - 1))
+    return blocks
+
+
+# Ước lượng Mist/Fan/Drip làm sensor thay đổi bao nhiêu từ data đã thu.
+def estimate_actuator_effects(data: pd.DataFrame) -> dict[str, float]:
+    effects = {
+        "mist_humidity_gain": 28.0,
+        "fan_humidity_drop": 25.0,
+        "drip_soil_gain": 6.0,
+    }
+
+    mist_gains: list[float] = []
+    for start, end in active_blocks(data, "Mist"):
+        before = float(data.loc[max(0, start - 1), "Humidity"])
+        window = data.loc[start : min(len(data) - 1, end + 24), "Humidity"]
+        mist_gains.append(float(window.max() - before))
+    if mist_gains:
+        effects["mist_humidity_gain"] = float(np.clip(np.median(mist_gains), 8.0, 38.0))
+
+    fan_drops: list[float] = []
+    for start, end in active_blocks(data, "Fan"):
+        before = float(data.loc[max(0, start - 1), "Humidity"])
+        window = data.loc[start : min(len(data) - 1, end + 24), "Humidity"]
+        fan_drops.append(float(before - window.min()))
+    if fan_drops:
+        effects["fan_humidity_drop"] = float(np.clip(np.median(fan_drops), 6.0, 36.0))
+
+    drip_gains: list[float] = []
+    for start, end in active_blocks(data, "Drip"):
+        before = float(data.loc[max(0, start - 1), "Soil_Moisture"])
+        window = data.loc[start : min(len(data) - 1, end + 36), "Soil_Moisture"]
+        gain = float(window.max() - before)
+        if before >= 25.0:
+            drip_gains.append(gain)
+    if drip_gains:
+        effects["drip_soil_gain"] = float(np.clip(np.median(drip_gains), 3.0, 12.0))
+
+    return effects
 
 
 # Phân tích data sạch để lấy nền môi trường, nền đất và mẫu thiết bị.
@@ -34,6 +98,7 @@ def analyze_collected_data(source_data: pd.DataFrame) -> dict[str, object]:
         "data": data,
         "sensor": sensor_profile,
         "actuator_template": actuator_template,
+        "effects": estimate_actuator_effects(data),
         "start_day": pd.Timestamp(data["Timestamp"].iloc[0]).normalize(),
         "soil0": sensor_profile["Soil_Moisture"]["median"],
     }
@@ -89,6 +154,29 @@ def base_environment(
     )
 
 
+# Sinh Humidity có phản ứng theo Mist và Fan đã đo từ data thật.
+def humidity_response(
+    base_humi: np.ndarray,
+    mist: np.ndarray,
+    fan: np.ndarray,
+    rng: np.random.Generator,
+    effects: dict[str, float],
+) -> np.ndarray:
+    humi = np.zeros(len(base_humi), dtype=float)
+    humi[0] = base_humi[0]
+
+    mist_rate = float(np.clip(effects["mist_humidity_gain"] / 22.0, 0.35, 1.75))
+    fan_rate = float(np.clip(effects["fan_humidity_drop"] / 28.0, 0.20, 1.30))
+
+    for i in range(1, len(base_humi)):
+        relax = 0.035 * (base_humi[i] - humi[i - 1])
+        mist_push = mist_rate * max(0.0, 96.0 - humi[i - 1]) / 22.0 * mist[i - 1]
+        fan_pull = fan_rate * max(0.0, humi[i - 1] - base_humi[i]) / 18.0 * fan[i - 1]
+        humi[i] = humi[i - 1] + relax + mist_push - fan_pull + rng.normal(0.0, 0.08)
+
+    return np.clip(humi, 30.0, 100.0)
+
+
 # Sinh phản ứng Soil_Moisture theo môi trường và thiết bị.
 def soil_response(
     temp: np.ndarray,
@@ -99,11 +187,13 @@ def soil_response(
     fan: np.ndarray,
     soil0: float,
     rng: np.random.Generator,
+    effects: dict[str, float],
 ) -> np.ndarray:
     soil_true = np.zeros(len(temp), dtype=float)
     soil_meas = np.zeros(len(temp), dtype=float)
     soil_true[0] = soil0
     soil_meas[0] = soil0 + rng.normal(0.0, 0.04)
+    drip_scale = float(np.clip(effects["drip_soil_gain"] / 6.0, 0.7, 2.2))
 
     for i in range(1, len(temp)):
         vpd_proxy = max(0.0, temp[i - 1] - 22.0) * max(0.0, 100.0 - humi[i - 1]) / 100.0
@@ -114,14 +204,14 @@ def soil_response(
         water = 0.0
         for lag, gain in ((2, 0.0090), (3, 0.0080), (6, 0.0060), (10, 0.0040)):
             if i - lag >= 0:
-                water += gain * drip[i - lag]
+                water += drip_scale * gain * drip[i - lag]
         if i - 2 >= 0:
             water += 0.0018 * mist[i - 2]
 
         drainage = 0.010 * max(0.0, soil_true[i - 1] - 64.0)
         slow_balance = 0.00025 * (57.0 - soil_true[i - 1])
         soil_true[i] = soil_true[i - 1] + water - evap - drainage + slow_balance + rng.normal(0.0, 0.003)
-        soil_true[i] = float(np.clip(soil_true[i], 40.0, 82.0))
+        soil_true[i] = float(np.clip(soil_true[i], 0.0, 100.0))
 
         raw_sensor = soil_true[i] + rng.normal(0.0, 0.045)
         soil_meas[i] = float(np.clip(0.48 * soil_meas[i - 1] + 0.52 * raw_sensor, 0.0, 100.0))
@@ -158,13 +248,14 @@ def _build_training_data(source_data: pd.DataFrame, days: int, seed: int) -> pd.
 
     out: list[pd.DataFrame] = []
     start_day = profile["start_day"]
+    current_soil = soil0
 
     for day in range(days):
         day_start = start_day + pd.to_timedelta(day, unit="D")
         index = pd.date_range(day_start, periods=samples_per_day, freq=f"{SAMPLE_SECONDS}s")
 
         temp_bias = (temp_base - 28.0) * 0.35 + rng.normal(0.0, 0.4)
-        humi_bias = (humi_base - 75.0) * 0.45 + rng.normal(0.0, 1.0)
+        humi_bias = rng.normal(0.0, 1.0)
         light_scale = rng.uniform(0.90, 1.08)
         temp, humi, light = base_environment(index, rng, profile, temp_bias, humi_bias, light_scale)
 
@@ -181,7 +272,9 @@ def _build_training_data(source_data: pd.DataFrame, days: int, seed: int) -> pd.
                 day_mist[start_idx:end_idx] = mist_template[:n]
                 day_fan[start_idx:end_idx] = fan_template[:n]
 
-        soil = soil_response(temp, humi, light, day_drip, day_mist, day_fan, soil0, rng)
+        humi = humidity_response(humi, day_mist, day_fan, rng, profile["effects"])
+        soil = soil_response(temp, humi, light, day_drip, day_mist, day_fan, current_soil, rng, profile["effects"])
+        current_soil = float(soil[-1])
         day_df = pd.DataFrame(
             {
                 "Timestamp": index,
@@ -214,6 +307,33 @@ def build_training_data(source_data: pd.DataFrame, days: int, seed: int) -> pd.D
     source_data["Timestamp"] = pd.to_datetime(source_data["Timestamp"])
     source_data = source_data.sort_values("Timestamp").reset_index(drop=True)
     return _build_training_data(source_data, days, seed)
+
+
+# Sinh các phiên thu đại diện từ data thật rồi ghi vào _01_data.
+def build_collection_session_files(output_dir: Path, source_data: pd.DataFrame, seed: int) -> list[Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    one_day = build_training_data(source_data, days=1, seed=seed)
+    one_day["Timestamp"] = pd.to_datetime(one_day["Timestamp"])
+    day0 = pd.Timestamp(one_day["Timestamp"].iloc[0]).normalize()
+
+    windows = (
+        ("01_morning_raw.csv", "morning_anchor", 7.0, 9.0),
+        ("02_noon_raw.csv", "noon_anchor", 11.5, 13.5),
+        ("03_afternoon_raw.csv", "afternoon_anchor", 15.0, 17.0),
+        ("04_night_raw.csv", "night_anchor", 20.0, 22.0),
+    )
+
+    paths: list[Path] = []
+    for file_name, artifact_name, start_hour, end_hour in windows:
+        start = day0 + pd.to_timedelta(start_hour, unit="h")
+        end = day0 + pd.to_timedelta(end_hour, unit="h")
+        session = one_day[(one_day["Timestamp"] >= start) & (one_day["Timestamp"] < end)].reset_index(drop=True)
+        raw_session = inject_collection_artifacts(session, artifact_name)
+        path = output_dir / file_name
+        format_model_data(raw_session).to_csv(path, index=False)
+        paths.append(path)
+
+    return paths
 
 
 # Tạo data train bằng cách lấy lại các ngày từ data 5s chuẩn.

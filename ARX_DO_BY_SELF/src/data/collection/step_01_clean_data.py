@@ -74,6 +74,21 @@ def fill_sensor_missing(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+# Lọc spike Soil_Moisture bị nhảy phi thực tế rồi nội suy lại.
+def smooth_soil_moisture(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    soil = out["Soil_Moisture"].astype(float)
+
+    local_median = soil.rolling(window=5, center=True, min_periods=1).median()
+    spike = (soil - local_median).abs() > 5.0
+    out.loc[spike, "Soil_Moisture"] = np.nan
+
+    out["Soil_Moisture"] = out["Soil_Moisture"].interpolate(method="time", limit=12, limit_direction="both")
+    out["Soil_Moisture"] = out["Soil_Moisture"].ffill().bfill()
+    out["Soil_Moisture"] = out["Soil_Moisture"].rolling(window=3, center=True, min_periods=1).median()
+    return out
+
+
 # Xử lý missing cho Drip, Mist, Fan và ép về 0/1.
 def fill_actuator_missing(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
@@ -96,6 +111,7 @@ def clean_data_file(path: Path) -> pd.DataFrame:
 
     filled = coerce_numeric(gridded)
     filled = fill_sensor_missing(filled)
+    filled = smooth_soil_moisture(filled)
     filled = fill_actuator_missing(filled)
 
     return format_model_data(filled.reset_index())

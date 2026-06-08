@@ -246,6 +246,36 @@ Mục đích là để dữ liệu nhìn giống dữ liệu cảm biến thực
 
 ## 7. Xử Lý Missing Của Thiết Bị
 
+## 7. Làm Mềm Soil Moisture
+
+Hàm:
+
+```text
+smooth_soil_moisture()
+```
+
+Soil sensor thực tế có thể bị nhiễu kiểu:
+
+```text
+30 -> 50 -> 40 -> 34
+```
+
+Những bước nhảy lớn trong vài giây thường không phải phản ứng thật của đất, mà là nhiễu cảm biến hoặc tiếp xúc đầu dò.
+
+Cách xử lý:
+
+```text
+1. Tính median cục bộ với cửa sổ 5 mẫu
+2. Nếu Soil_Moisture lệch khỏi median cục bộ hơn 5% thì xem là spike
+3. Chuyển spike thành missing
+4. Nội suy lại theo thời gian
+5. Làm mềm nhẹ bằng rolling median 3 mẫu
+```
+
+Nguyên tắc là chỉ lọc các cú nhảy phi thực tế, không xóa phản ứng tăng thật do bơm.
+
+## 8. Xử Lý Missing Của Thiết Bị
+
 Hàm:
 
 ```text
@@ -292,7 +322,7 @@ Fan trước clean: NaN
 Fan sau clean: 0
 ```
 
-## 8. Clean Một File Data
+## 9. Clean Một File Data
 
 Hàm:
 
@@ -310,11 +340,12 @@ gộp duplicate Timestamp
 đưa về lưới 5 giây
 ép kiểu số
 xử lý missing sensor
+xử lý spike Soil_Moisture
 xử lý missing thiết bị
 trả về đúng 8 cột model cần
 ```
 
-## 9. Clean Toàn Bộ Data
+## 10. Clean Toàn Bộ Data
 
 Hàm:
 
@@ -339,7 +370,7 @@ Ngoài ra còn có file tổng hợp:
 
 File tổng hợp này ghép toàn bộ data sạch theo thứ tự thời gian.
 
-## 10. Tóm Tắt Luồng Clean Data
+## 11. Tóm Tắt Luồng Clean Data
 
 ```text
 data/_01_data/*.csv
@@ -349,6 +380,7 @@ data/_01_data/*.csv
   -> gộp timestamp trùng
   -> reindex về 5 giây
   -> xử lý missing sensor
+  -> lọc spike Soil_Moisture
   -> xử lý missing thiết bị
   -> data/_02_clean_data/*.csv
 ```

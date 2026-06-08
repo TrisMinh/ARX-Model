@@ -9,6 +9,19 @@ from config import ExperimentConfig
 ScaleStats = dict[str, tuple[float, float]]
 
 
+# Đánh dấu các dòng nằm trong những block giờ được chọn.
+def in_time_blocks(timestamp: pd.Series, blocks: tuple[tuple[float, float], ...]) -> pd.Series:
+    time_of_day = timestamp - timestamp.dt.normalize()
+    mask = pd.Series(False, index=timestamp.index)
+
+    for start_hour, end_hour in blocks:
+        start = pd.to_timedelta(start_hour, unit="h")
+        end = pd.to_timedelta(end_hour, unit="h")
+        mask = mask | ((time_of_day >= start) & (time_of_day < end))
+
+    return mask
+
+
 # Chia train, validation, test theo thời gian.
 def split_time(df: pd.DataFrame, cfg: ExperimentConfig) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     if getattr(cfg, "split_strategy", "ratio") == "same_clock_by_day":
@@ -18,12 +31,12 @@ def split_time(df: pd.DataFrame, cfg: ExperimentConfig) -> tuple[pd.DataFrame, p
         if len(days) >= 3:
             val_day = pd.Timestamp(days[-2])
             test_day = pd.Timestamp(days[-1])
-            window_start = pd.to_timedelta(cfg.eval_window_start_hour, unit="h")
-            window_end = pd.to_timedelta(cfg.eval_window_end_hour, unit="h")
+            blocks = getattr(cfg, "eval_time_blocks", ((0.0, 24.0),))
+            selected_hours = in_time_blocks(timestamp, blocks)
 
-            train = sorted_df[timestamp < val_day]
-            val = sorted_df[(timestamp >= val_day + window_start) & (timestamp < val_day + window_end)]
-            test = sorted_df[(timestamp >= test_day + window_start) & (timestamp < test_day + window_end)]
+            train = sorted_df[(timestamp < val_day) & selected_hours]
+            val = sorted_df[(timestamp >= val_day) & (timestamp < test_day) & selected_hours]
+            test = sorted_df[(timestamp >= test_day) & selected_hours]
             if len(train) > 0 and len(val) > 0 and len(test) > 0:
                 return (
                     train.reset_index(drop=True),

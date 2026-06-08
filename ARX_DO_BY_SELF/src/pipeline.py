@@ -199,10 +199,8 @@ def run_pipeline(project_root: Path, cfg: ExperimentConfig, grid: str) -> dict[s
             "n_input_cols": len(INPUT_COLS),
             "n_params": int(len(theta)),
             "input_cols": list(INPUT_COLS),
-            "split": (
-                f"validation/test both use {cfg.eval_window_start_hour:g}:00-"
-                f"{cfg.eval_window_end_hour:g}:00 on different days"
-            ),
+            "split": "train/validation/test use the same time blocks on different days",
+            "time_blocks": [list(block) for block in cfg.eval_time_blocks],
             "horizons_seconds": {
                 "one_step": cfg.sampling_seconds,
                 "five_minute": cfg.five_minute_seconds,

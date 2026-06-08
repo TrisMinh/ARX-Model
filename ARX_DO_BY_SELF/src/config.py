@@ -29,8 +29,9 @@ class ExperimentConfig:
     train_ratio: float = 0.70
     val_ratio: float = 0.15
     split_strategy: str = "same_clock_by_day"
-    eval_window_start_hour: float = 6.0
-    eval_window_end_hour: float = 15.0
+    eval_time_blocks: tuple[tuple[float, float], ...] = (
+        (6.0, 22.0),
+    )
     five_minute_seconds: int = 300
     control_horizon_seconds: int = 1200
     soil_low_sp: float = 55.0
