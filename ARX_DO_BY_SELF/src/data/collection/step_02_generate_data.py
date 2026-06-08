@@ -219,16 +219,32 @@ def soil_response(
     return soil_meas
 
 
-# Lấy mẫu bật/tắt thiết bị từ data sạch đã phân tích.
-def _extract_actuator_template(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    sample = df.loc[:, ["Drip", "Mist", "Fan"]].copy()
-    if sample.empty:
-        raise ValueError("source data is empty")
-    return (
-        sample["Drip"].to_numpy(dtype=float),
-        sample["Mist"].to_numpy(dtype=float),
-        sample["Fan"].to_numpy(dtype=float),
-    )
+# Dựng lịch bật/tắt thiết bị trong 1 ngày theo giờ thu thật.
+def _daily_actuator_template(data: pd.DataFrame, samples_per_day: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    drip = np.zeros(samples_per_day, dtype=float)
+    mist = np.zeros(samples_per_day, dtype=float)
+    fan = np.zeros(samples_per_day, dtype=float)
+
+    timestamp = pd.to_datetime(data["Timestamp"])
+    second_of_day = timestamp.dt.hour * 3600 + timestamp.dt.minute * 60 + timestamp.dt.second
+    step_index = (second_of_day // SAMPLE_SECONDS).astype(int).clip(0, samples_per_day - 1)
+
+    for idx, row in zip(step_index, data.loc[:, ["Drip", "Mist", "Fan"]].to_numpy(dtype=float)):
+        drip[idx] = max(drip[idx], row[0])
+        mist[idx] = max(mist[idx], row[1])
+        fan[idx] = max(fan[idx], row[2])
+
+    return drip, mist, fan
+
+
+# Thêm lệch nhẹ lịch thiết bị giữa các ngày để data không bị copy y hệt.
+def _shift_actuator_template(template: np.ndarray, shift_steps: int) -> np.ndarray:
+    shifted = np.zeros_like(template)
+    if shift_steps >= 0:
+        shifted[shift_steps:] = template[: len(template) - shift_steps]
+    else:
+        shifted[:shift_steps] = template[-shift_steps:]
+    return shifted
 
 
 # Sinh data train nhiều ngày từ profile phân tích data sạch.
@@ -237,14 +253,11 @@ def _build_training_data(source_data: pd.DataFrame, days: int, seed: int) -> pd.
     rng = np.random.default_rng(seed + 10_000)
     profile = analyze_collected_data(source_data)
 
-    actuator_template = profile["actuator_template"].iloc[: min(len(profile["actuator_template"]), samples_per_day)]
     sensor = profile["sensor"]
     temp_base = float(sensor["Temperature"]["median"])
     humi_base = float(sensor["Humidity"]["median"])
     soil0 = float(profile["soil0"])
-    drip_template, mist_template, fan_template = _extract_actuator_template(actuator_template)
-    session_offsets = (7 * 3600, 11 * 3600 + 30 * 60, 15 * 3600, 20 * 3600)
-    session_len = len(actuator_template)
+    drip_template, mist_template, fan_template = _daily_actuator_template(profile["data"], samples_per_day)
 
     out: list[pd.DataFrame] = []
     start_day = profile["start_day"]
@@ -259,18 +272,10 @@ def _build_training_data(source_data: pd.DataFrame, days: int, seed: int) -> pd.
         light_scale = rng.uniform(0.90, 1.08)
         temp, humi, light = base_environment(index, rng, profile, temp_bias, humi_bias, light_scale)
 
-        day_drip = np.zeros(samples_per_day, dtype=float)
-        day_mist = np.zeros(samples_per_day, dtype=float)
-        day_fan = np.zeros(samples_per_day, dtype=float)
-
-        for start_sec in session_offsets:
-            start_idx = int(start_sec // SAMPLE_SECONDS)
-            end_idx = min(samples_per_day, start_idx + session_len)
-            n = end_idx - start_idx
-            if n > 0:
-                day_drip[start_idx:end_idx] = drip_template[:n]
-                day_mist[start_idx:end_idx] = mist_template[:n]
-                day_fan[start_idx:end_idx] = fan_template[:n]
+        shift_steps = int(rng.integers(-12, 13))
+        day_drip = _shift_actuator_template(drip_template, shift_steps)
+        day_mist = _shift_actuator_template(mist_template, shift_steps)
+        day_fan = _shift_actuator_template(fan_template, shift_steps)
 
         humi = humidity_response(humi, day_mist, day_fan, rng, profile["effects"])
         soil = soil_response(temp, humi, light, day_drip, day_mist, day_fan, current_soil, rng, profile["effects"])

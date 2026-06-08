@@ -124,7 +124,11 @@ def clean_all_data_files(raw_paths: list[Path], processed_dir: Path) -> pd.DataF
 
     for path in raw_paths:
         cleaned = clean_data_file(path)
-        cleaned.to_csv(processed_dir / path.name.replace("_raw.csv", "_sau_xu_ly.csv"), index=False)
+        output_dir = processed_dir
+        if path.parent.name.startswith("2026-"):
+            output_dir = processed_dir / path.parent.name
+            output_dir.mkdir(parents=True, exist_ok=True)
+        cleaned.to_csv(output_dir / path.name.replace("_raw.csv", "_sau_xu_ly.csv"), index=False)
         cleaned_files.append(cleaned)
 
     cleaned_data = (

@@ -67,11 +67,24 @@ seed = 505031
 raw-dir = None
 ```
 
-Nếu muốn dùng thư mục CSV tự thu:
+Raw data chính nằm trong:
 
 ```text
-python scripts/01_build_data.py --raw-dir data/my_raw_folder
+data/_01_data/
 ```
+
+Raw được chia theo từng ngày:
+
+```text
+data/_01_data/
+  2026-04-08/
+  2026-04-09/
+  2026-04-10/
+  2026-04-11/
+  2026-04-12/
+```
+
+Code sẽ đọc toàn bộ CSV trong các folder con của `_01_data`.
 
 ## 3. Luồng Tổng
 
@@ -103,71 +116,73 @@ clear_csv_outputs()
 Trước khi build lại, pipeline xóa các file CSV cũ trong:
 
 ```text
-data/_01_data/
 data/_02_clean_data/
 ```
 
 Mục đích:
 
 ```text
-tránh file cũ bị lẫn với file mới
+tránh file clean cũ bị lẫn với file mới
 mỗi lần build là một bộ data rõ ràng
 ```
+
+`data/_01_data/` là raw data gốc nên không bị xóa khi chạy build mặc định.
 
 File cuối `mini_greenhouse_5s_data.csv` sẽ được ghi đè sau khi build xong.
 
 ## 5. Tạo Data Đầu Vào `_01_data`
 
-Pipeline có 2 trường hợp.
+Pipeline dùng `_01_data` làm raw data chính.
 
-### Trường Hợp 1: Chạy Mặc Định
+### Chạy Mặc Định
 
 Điều kiện:
 
 ```text
 --raw-dir không được truyền vào
-data/mini_greenhouse_5s_data.csv đang tồn tại
+data/_01_data/ có CSV raw
 ```
 
-Khi đó pipeline dùng data 5s chuẩn hiện có làm mốc.
+Khi đó pipeline đọc raw data trong `_01_data`.
 
 Hàm:
 
 ```text
-build_reference_data_files()
+input_csv_paths()
 ```
 
 Thuật toán:
 
 ```text
-đọc mini_greenhouse_5s_data.csv
-tách 4 khung giờ đại diện trong ngày đầu tiên
-thêm lỗi nhỏ giống quá trình thu data
-ghi các file vào data/_01_data/
+đọc toàn bộ CSV trong data/_01_data/
+giữ nguyên cấu trúc folder ngày
+ghép thành 00_raw_tong_hop.csv
+clean sang data/_02_clean_data/
+sinh data train cuối cùng
 ```
 
-4 khung giờ được tách:
+Raw hiện được tổ chức theo ngày:
 
 ```text
-morning_anchor:   07:00 -> 09:00
-noon_anchor:      11:30 -> 13:30
-afternoon_anchor: 15:00 -> 17:00
-night_anchor:     20:00 -> 22:00
+2026-04-08/
+2026-04-09/
+2026-04-10/
+2026-04-11/
+2026-04-12/
 ```
 
-Các lỗi nhỏ được thêm vào để mô phỏng raw data:
+Mỗi ngày có các phiên:
 
 ```text
-missing sensor
-mất một vài timestamp
-duplicate timestamp
-missing trạng thái thiết bị
-timestamp lệch nhẹ vài giây
+01_morning_raw.csv
+02_noon_raw.csv
+03_afternoon_raw.csv
+04_night_raw.csv
 ```
 
-Mục đích: thể hiện quá trình sinh viên có thu data, raw có lỗi nhẹ, sau đó phải clean lại.
+Mục đích: thể hiện quá trình sinh viên thu raw data theo nhiều ngày, sau đó clean và sinh data train.
 
-### Trường Hợp 2: Dùng CSV Thực Tế
+### Dùng Thư Mục Raw Khác
 
 Điều kiện:
 
@@ -202,7 +217,7 @@ ghi vào data/_01_data/
 04_night_raw.csv
 ```
 
-Trường hợp này dùng khi bạn gửi data thật. Data thật không bị copy thẳng sang `_01_data`; nó được dùng làm nền để mô phỏng quá trình sinh viên thu các phiên đại diện.
+Trường hợp này chỉ dùng nếu muốn nhập một thư mục raw khác để tạo lại `_01_data`.
 
 ## 6. Ghi File Tổng Hợp Raw
 
@@ -264,25 +279,6 @@ Sau khi clean, pipeline tạo:
 data/mini_greenhouse_5s_data.csv
 ```
 
-Ở bước này cũng có 2 trường hợp.
-
-### Trường Hợp 1: Dùng Data Chuẩn
-
-Hàm:
-
-```text
-build_reference_training_data()
-```
-
-Thuật toán:
-
-```text
-đọc data 5s chuẩn
-chia theo từng ngày
-lấy đủ số ngày cần build
-ghi lại thành mini_greenhouse_5s_data.csv
-```
-
 Với cấu hình hiện tại:
 
 ```text
@@ -291,15 +287,6 @@ sampling = 5 giây
 1 ngày = 24 * 3600 / 5 = 17280 dòng
 12 ngày = 207360 dòng
 ```
-
-Lý do dùng nhánh này làm mặc định: giữ kết quả đúng với bản 5s chuẩn đã đạt khoảng:
-
-```text
-validation free-run khoảng 79%
-test free-run khoảng 73%
-```
-
-### Trường Hợp 2: Dùng Data Thật
 
 Hàm:
 
@@ -364,7 +351,7 @@ soil0 dùng làm độ ẩm đất ban đầu
 
 Đây là điểm dễ nhầm nhất.
 
-Pipeline có 2 cách chạy nên nguồn dữ liệu 0h-7h cũng có 2 trường hợp.
+Pipeline hiện dùng `_01_data` làm raw data chính.
 
 ### Trường Hợp Mặc Định Hiện Tại
 
@@ -374,78 +361,26 @@ Khi chạy:
 python scripts/01_build_data.py
 ```
 
-và không truyền `--raw-dir`, pipeline dùng file:
-
-```text
-data/mini_greenhouse_5s_data.csv
-```
-
-làm data chuẩn.
-
-Trong trường hợp này, dữ liệu từ 0h đến 7h đã có sẵn trong file chuẩn. Pipeline không tự suy từ 4 phiên 2 tiếng để tạo 0h-7h.
-
-Các raw file tạo ra từ data chuẩn cũng được làm cho timestamp lệch nhẹ vài giây trước khi clean, để đúng kiểu dữ liệu thu thực tế hơn.
-
-Cụ thể:
-
-```text
-build_reference_training_data()
-```
-
-sẽ đọc toàn bộ ngày trong file chuẩn:
-
-```text
-00:00 -> 23:59:55
-```
-
-rồi lấy đủ 12 ngày để tạo lại file train.
-
-Vì vậy:
-
-```text
-0h -> 7h
-```
-
-được lấy trực tiếp từ data chuẩn 5s, không phải tự sinh từ raw 7h.
-
-Các file trong `_01_data` và `_02_clean_data` ở chế độ mặc định dùng để trình bày quá trình thu và clean data theo vài phiên đại diện. Còn file train cuối cùng vẫn bám theo data chuẩn để giữ kết quả model đúng với bản 5s.
-
-### Trường Hợp Dùng Data Thật Sau Này
-
-Khi chạy:
-
-```text
-python scripts/01_build_data.py --raw-dir <thu_muc_csv_that>
-```
-
-pipeline sẽ dùng data thật bạn đưa vào để tạo các phiên thu đại diện:
-
-```text
-morning
-noon
-afternoon
-night
-```
-
-Các phiên này nằm trong:
+và không truyền `--raw-dir`, pipeline dùng các phiên raw trong:
 
 ```text
 data/_01_data/
 ```
 
-Sau đó pipeline clean các phiên này sang:
+để clean và sinh data train.
+
+Trong trường hợp này, `_01_data` đã có raw theo nhiều ngày và nhiều phiên:
 
 ```text
-data/_02_clean_data/
+2026-04-08/01_morning_raw.csv
+2026-04-08/02_noon_raw.csv
+...
+2026-04-12/04_night_raw.csv
 ```
 
-Lúc đó dữ liệu 0h-7h được sinh bằng thuật toán trong:
+Với các khoảng không có phiên thu, ví dụ `0h -> 7h`, pipeline sinh bằng thuật toán trong `step_02_generate_data.py`.
 
-```text
-step_02_generate_data.py
-```
-
-Cách làm:
+Logic:
 
 ```text
 1. Tạo trục thời gian nguyên ngày: 00:00 -> 23:59:55, bước 5 giây

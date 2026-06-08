@@ -55,7 +55,8 @@ def input_data_dir(input_dir: Path | None = None) -> Path:
 
 # Lấy danh sách CSV trong thư mục data đầu vào.
 def input_csv_paths(input_dir: Path | None = None) -> list[Path]:
-    return sorted(path for path in input_data_dir(input_dir).glob("*.csv") if not path.name.startswith("00_"))
+    root = input_data_dir(input_dir)
+    return sorted(path for path in root.rglob("*.csv") if not path.name.startswith("00_"))
 
 
 # Kiểm tra và trả về đúng 8 cột raw cần dùng.

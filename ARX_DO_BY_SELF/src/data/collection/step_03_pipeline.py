@@ -7,6 +7,7 @@ import pandas as pd
 from data.collection.step_00_data_io import (
     build_reference_data_files,
     format_model_data,
+    input_csv_paths,
     load_reference_data,
     load_source_data,
     project_root,
@@ -22,7 +23,7 @@ from data.collection.step_02_generate_data import (
 # Xóa CSV output cũ trong một thư mục.
 def clear_csv_outputs(directory: Path) -> None:
     directory.mkdir(parents=True, exist_ok=True)
-    for path in directory.glob("*.csv"):
+    for path in directory.rglob("*.csv"):
         path.unlink()
 
 
@@ -34,15 +35,28 @@ def run(days: int, seed: int, source_dir: Path | None = None) -> None:
     clean_dir = data_dir / "_02_clean_data"
     data_path = data_dir / "mini_greenhouse_5s_data.csv"
 
-    clear_csv_outputs(input_dir)
     clear_csv_outputs(clean_dir)
 
-    use_reference_data = source_dir is None and data_path.exists()
-    if use_reference_data:
+    use_reference_data = False
+    if source_dir is None:
+        raw_paths = input_csv_paths(input_dir)
+    elif data_path.exists() and source_dir == data_path.parent:
         raw_paths = build_reference_data_files(input_dir, data_path)
+        use_reference_data = True
     else:
+        clear_csv_outputs(input_dir)
+        for child in input_dir.iterdir():
+            if child.is_dir():
+                for path in child.rglob("*"):
+                    if path.is_file():
+                        path.unlink()
+                child.rmdir()
         source_data = load_source_data(source_dir)
         raw_paths = build_collection_session_files(input_dir, source_data, seed)
+
+    if not raw_paths and data_path.exists():
+        raw_paths = build_reference_data_files(input_dir, data_path)
+        use_reference_data = True
 
     raw_df = pd.concat([pd.read_csv(path) for path in raw_paths], ignore_index=True)
     raw_df["Timestamp"] = pd.to_datetime(raw_df["Timestamp"], errors="coerce")
