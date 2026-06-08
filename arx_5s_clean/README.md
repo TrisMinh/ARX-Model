@@ -1,42 +1,50 @@
 # ARX PBL5 5s Clean
 
-Ban nay la pipeline ARX 5 giay doc lap, tach code theo tung vai tro de de doc va de bao tri.
+Pipeline ARX 5 giây gọn lại: thu raw, clean raw, sinh data train, chạy model.
 
-## Cau truc
+Hướng dẫn dựng source code từ đầu: `00_BUILD_SRC_FROM_ZERO.md`.
+Hướng dẫn build lại toàn bộ từ raw data: `00_BUILD_FROM_RAW.md`.
+
+## Cấu trúc chính
 
 ```text
-ARX_PBL5_5s_Clean/
-  data/                 # Du lieu gia lap xuat ra sau khi chay train
-  results/              # Leaderboard, metrics, predictions, model json
-  scripts/train.py      # Lenh train tu dau den cuoi
+arx_5s_clean/
+  data/
+    00_templates/
+    01_raw_sessions/
+    01_raw_sessions_real/
+    02_cleaned_sessions/
+  results/
+  scripts/
+    01_build_data_from_collection.py
+    02_train.py
   src/arx5s_clean/
-    data/               # Sinh du lieu 5s
-    preprocessing/      # Feature engineering, split, scale
-    algorithm/          # Dinh nghia ARX va ham fit/mo phong
-    evaluation/         # Metric va danh gia
-    utils/              # Ghi file JSON/Markdown
-    pipeline.py         # Noi cac buoc thanh mot workflow
+    data/collection/
+    preprocessing/
+    algorithm/
+    evaluation/
+    pipeline.py
 ```
 
-## Chay lai
+## Chạy
 
 ```powershell
-cd ARX-Model\ARX_PBL5_5s_Clean
-python -B .\scripts\train.py --days 4 --grid quick
+cd C:\Users\minht\OneDrive\Desktop\ARX-Model\arx_5s_clean
+python -B .\scripts\01_build_data_from_collection.py --source legacy --days 12
+python -B .\scripts\02_train.py --days 12 --grid quick
 ```
 
-Muon train bo dai hon:
+Khi có raw thật:
 
 ```powershell
-python -B .\scripts\train.py --days 16 --grid quick
+python -B .\scripts\01_build_data_from_collection.py --source real --days 12
+python -B .\scripts\02_train.py --days 12 --grid quick
 ```
 
-## File ket qua chinh
+## File đầu ra quan trọng
 
-- `data/mini_greenhouse_5s_data.csv`: file du lieu gia lap 5s.
-- `results/leaderboard.csv`: bang so sanh cac cau hinh ARX tren validation.
-- `results/metrics.json`: cau hinh, ket qua validation/test, audit du lieu.
-- `results/arx_5s_model.json`: artifact de dua qua runtime sau nay.
-- `results/test_predictions.csv`: y thuc te va y du doan tren test.
-- `results/SUMMARY.md`: tom tat ket qua ngan gon.
-
+- `data/01_raw_sessions/00_raw_tong_hop.csv`
+- `data/02_cleaned_sessions/00_sau_xu_ly_tong_hop.csv`
+- `data/mini_greenhouse_5s_data.csv`
+- `results/metrics.json`
+- `results/SUMMARY.md`

@@ -1,0 +1,108 @@
+{
+  "model": {
+    "name": "ARX_na144_nb16_nk4_alpha100",
+    "na": 144,
+    "nb": 16,
+    "nk": 4,
+    "alpha": 100.0,
+    "sampling_seconds": 5,
+    "output_memory_seconds": 720,
+    "input_delay_seconds": 20,
+    "input_memory_seconds": 80,
+    "n_input_cols": 16,
+    "n_params": 401,
+    "input_cols": [
+      "Temperature",
+      "Humidity",
+      "Light",
+      "Drip",
+      "Mist",
+      "Fan",
+      "Light_log",
+      "Temp_x_Humidity",
+      "Temp_x_Light",
+      "Humidity_x_Light",
+      "Air_Dryness",
+      "Temp_x_Air_Dryness",
+      "Hour_sin",
+      "Hour_cos",
+      "Day_sin",
+      "Day_cos"
+    ],
+    "split": "validation/test both use 6:00-15:00 on different days",
+    "horizons_seconds": {
+      "one_step": 5,
+      "five_minute": 300,
+      "control": 1200
+    }
+  },
+  "train": {
+    "lag_steps": 144,
+    "metrics_1step": {
+      "FIT": 92.94230529990453,
+      "RMSE": 0.0562702152413757,
+      "Bias": -1.0864567825077985e-17
+    },
+    "metrics_5min_chunked": {
+      "FIT": 86.90022170917828,
+      "RMSE": 0.10444307601303113,
+      "Bias": -0.0003553839448140323
+    },
+    "metrics_20min_chunked": {
+      "FIT": 77.15215979167766,
+      "RMSE": 0.18216328999120124,
+      "Bias": -0.0027219677604272303
+    },
+    "metrics_free_run": {
+      "FIT": 56.81433519669572,
+      "RMSE": 0.34431450453516527,
+      "Bias": 0.0016123076311148872
+    }
+  },
+  "validation": {
+    "lag_steps": 144,
+    "metrics_1step": {
+      "FIT": 94.93687163278821,
+      "RMSE": 0.05526464454927199,
+      "Bias": 2.422114902043115e-05
+    },
+    "metrics_5min_chunked": {
+      "FIT": 91.09740828842853,
+      "RMSE": 0.09717284074672408,
+      "Bias": 0.0023887404033956674
+    },
+    "metrics_20min_chunked": {
+      "FIT": 84.63788393581014,
+      "RMSE": 0.16767931251951226,
+      "Bias": -0.019299720390588436
+    },
+    "metrics_free_run": {
+      "FIT": 79.15640365080424,
+      "RMSE": 0.2275103176973475,
+      "Bias": 0.029582240245344654
+    }
+  },
+  "test": {
+    "lag_steps": 144,
+    "metrics_1step": {
+      "FIT": 94.85817445130873,
+      "RMSE": 0.05584852649049273,
+      "Bias": -2.2630032931212104e-05
+    },
+    "metrics_5min_chunked": {
+      "FIT": 90.80974741389625,
+      "RMSE": 0.09982097995136631,
+      "Bias": 0.0016065848224149596
+    },
+    "metrics_20min_chunked": {
+      "FIT": 84.38193193432075,
+      "RMSE": 0.1696374332105482,
+      "Bias": 0.016144175223305652
+    },
+    "metrics_free_run": {
+      "FIT": 73.11062163553466,
+      "RMSE": 0.29206205960895615,
+      "Bias": -0.0037734586162932893
+    }
+  }
+}

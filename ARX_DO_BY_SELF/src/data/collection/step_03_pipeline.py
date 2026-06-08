@@ -1,0 +1,50 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pandas as pd
+
+from data.collection.step_00_data_io import (
+    build_data_files,
+    build_reference_data_files,
+    format_model_data,
+    load_reference_data,
+    project_root,
+)
+from data.collection.step_01_clean_data import clean_all_data_files
+from data.collection.step_02_generate_data import build_reference_training_data, build_training_data
+
+
+# Xóa CSV output cũ trong một thư mục.
+def clear_csv_outputs(directory: Path) -> None:
+    directory.mkdir(parents=True, exist_ok=True)
+    for path in directory.glob("*.csv"):
+        path.unlink()
+
+
+# Chạy toàn bộ pipeline build data.
+def run(days: int, seed: int, source_dir: Path | None = None) -> None:
+    root = project_root()
+    data_dir = root / "data"
+    input_dir = data_dir / "_01_data"
+    clean_dir = data_dir / "_02_clean_data"
+    data_path = data_dir / "mini_greenhouse_5s_data.csv"
+
+    clear_csv_outputs(input_dir)
+    clear_csv_outputs(clean_dir)
+
+    use_reference_data = source_dir is None and data_path.exists()
+    if use_reference_data:
+        raw_paths = build_reference_data_files(input_dir, data_path)
+    else:
+        raw_paths = build_data_files(input_dir, source_dir)
+
+    raw_df = pd.concat([pd.read_csv(path) for path in raw_paths], ignore_index=True)
+    format_model_data(raw_df).to_csv(input_dir / "00_raw_tong_hop.csv", index=False)
+
+    cleaned_data = clean_all_data_files(raw_paths, clean_dir)
+    if use_reference_data:
+        final_df = build_reference_training_data(load_reference_data(data_path), days)
+    else:
+        final_df = build_training_data(cleaned_data, days, seed)
+    format_model_data(final_df).to_csv(data_path, index=False)

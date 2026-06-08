@@ -10,6 +10,43 @@ ScaleStats = dict[str, tuple[float, float]]
 
 
 def split_time(df: pd.DataFrame, cfg: ExperimentConfig) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    if getattr(cfg, "split_strategy", "ratio") == "same_clock_by_day":
+        sorted_df = df.sort_values("Timestamp").reset_index(drop=True)
+        timestamp = pd.to_datetime(sorted_df["Timestamp"])
+        days = sorted(timestamp.dt.normalize().dropna().unique())
+        if len(days) >= 3:
+            val_day = pd.Timestamp(days[-2])
+            test_day = pd.Timestamp(days[-1])
+            window_start = pd.to_timedelta(cfg.eval_window_start_hour, unit="h")
+            window_end = pd.to_timedelta(cfg.eval_window_end_hour, unit="h")
+
+            train = sorted_df[timestamp < val_day]
+            val = sorted_df[(timestamp >= val_day + window_start) & (timestamp < val_day + window_end)]
+            test = sorted_df[(timestamp >= test_day + window_start) & (timestamp < test_day + window_end)]
+            if len(train) > 0 and len(val) > 0 and len(test) > 0:
+                return (
+                    train.reset_index(drop=True),
+                    val.reset_index(drop=True),
+                    test.reset_index(drop=True),
+                )
+
+    if getattr(cfg, "split_strategy", "ratio") == "last_day_clock":
+        sorted_df = df.sort_values("Timestamp").reset_index(drop=True)
+        timestamp = pd.to_datetime(sorted_df["Timestamp"])
+        last_day = timestamp.dt.normalize().max()
+        val_start = last_day + pd.to_timedelta(cfg.eval_window_start_hour, unit="h")
+        test_start = last_day + pd.to_timedelta(cfg.eval_window_end_hour, unit="h")
+
+        train = sorted_df[timestamp < val_start]
+        val = sorted_df[(timestamp >= val_start) & (timestamp < test_start)]
+        test = sorted_df[timestamp >= test_start]
+        if len(train) > 0 and len(val) > 0 and len(test) > 0:
+            return (
+                train.reset_index(drop=True),
+                val.reset_index(drop=True),
+                test.reset_index(drop=True),
+            )
+
     n_rows = len(df)
     n_train = int(n_rows * cfg.train_ratio)
     n_val = int(n_rows * cfg.val_ratio)
@@ -41,4 +78,3 @@ def apply_scale(df_in: pd.DataFrame, stats: ScaleStats) -> pd.DataFrame:
 def inverse_y(y_z: np.ndarray, stats: ScaleStats) -> np.ndarray:
     mean, std = stats["Soil_Moisture"]
     return np.asarray(y_z, dtype=float) * std + mean
-
