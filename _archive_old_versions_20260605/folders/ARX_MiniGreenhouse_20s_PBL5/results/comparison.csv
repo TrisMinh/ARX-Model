@@ -1,4 +1,0 @@
-case,family,selected_model,selection_policy,test_FIT_1step_20s,test_FIT_12_4min,test_FIT_60_20min,test_FIT_sim,test_RMSE_sim,mpc_note
-ARX fixed old order,ARX tuyến tính,ARX_na5_nb1_nk2_alpha0,validation robust score,96.89111903629289,91.65281766621591,84.08443575727298,64.40538421309732,0.5540870676335061,"Baseline đơn giản tương đương order ARX(5,1,2) cũ"
-ARX mini20 robust,ARX tuyến tính,ARX_na18_nb3_nk3_alpha0.01,validation robust score,97.15243341084678,95.06422216244471,91.90398510381372,76.59812937838763,0.3644189228369827,Phù hợp MPC; tuyến tính theo tham số
-NARX mini20 comparison,NNARX phi tuyến,Delta_NNARX_64_32_a10,validation robust score,97.02321417857304,94.34622358235468,86.93029505497455,-3.637402190644945,1.6138637411771082,Muốn dùng trực tiếp cho điều khiển cần NMPC hoặc local linearization

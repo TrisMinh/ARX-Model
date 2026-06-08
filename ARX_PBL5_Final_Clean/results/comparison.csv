@@ -1,2 +1,0 @@
-case,family,input_set,n_input_cols,selected_model,selection_policy,test_FIT_1step_20s,test_FIT_12_4min,test_FIT_60_20min,test_FIT_sim,test_RMSE_sim,note
-ARX robust chỉ cảm biến trong,ARX tuyến tính,inside_only,17,ARX_na12_nb3_nk2_alpha0.1,validation robust score,95.37314823204042,90.83889202204011,88.04670256366803,78.95030564001647,0.20209642115504203,"Sản phẩm chính: không dùng cảm biến ngoài, chọn bằng validation robust score"

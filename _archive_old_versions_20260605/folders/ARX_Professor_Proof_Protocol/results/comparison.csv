@@ -1,3 +1,0 @@
-case,family,selected_model,selection_policy,test_FIT_1step,test_FIT_12,test_FIT_sim,test_RMSE_sim,mpc_note
-ARX robust protocol,Linear ARX,ARX_na3_nb3_nk1_alpha0.1,validation robust score,92.3747661625985,89.38886086951207,77.32845610237827,0.4060712634296113,MPC-friendly linear plant model
-NARX protocol comparison,Nonlinear NNARX,Delta_NNARX_64_32_a05,validation robust score,92.28461580539586,88.25516624812704,49.837348974244996,0.8992497260727088,Needs NMPC/local linearization for direct MPC use
