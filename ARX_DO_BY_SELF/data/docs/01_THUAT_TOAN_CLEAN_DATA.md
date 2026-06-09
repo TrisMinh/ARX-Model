@@ -55,7 +55,9 @@ Cách xử lý:
 
 ```text
 Timestamp -> datetime
-bước đầu round về lưới 5 giây
+ước lượng offset timestamp của cả file theo modulo 5 giây
+trừ offset để đưa timestamp về gần lưới 5 giây chuẩn
+round về lưới 5 giây
 bỏ dòng Timestamp không đọc được
 sắp xếp lại dữ liệu theo thời gian tăng dần
 ```
@@ -67,7 +69,7 @@ data cảm biến là chuỗi thời gian
 ARX cần đúng thứ tự quá khứ -> hiện tại
 missing data cũng cần nội suy theo trục thời gian
 raw timestamp có thể lệch nhẹ vài giây nên cần round lại trước khi clean
-độ lệch timestamp được rải trong toàn phiên thu, không chỉ vài dòng đầu
+độ lệch timestamp thường lệch cùng một offset trong cả file thu
 ```
 
 ## 3. Gộp Timestamp Bị Trùng
@@ -245,8 +247,6 @@ Soil_Moisture
 
 Mục đích là để dữ liệu nhìn giống dữ liệu cảm biến thực tế, không giữ quá nhiều chữ số do tính toán float.
 
-## 7. Xử Lý Missing Của Thiết Bị
-
 ## 7. Làm Mềm Soil Moisture
 
 Hàm:
@@ -359,8 +359,8 @@ Hàm này chạy `clean_data_file()` cho từng file trong `_01_data`, sau đó 
 Mỗi file sẽ có một file sau xử lý tương ứng:
 
 ```text
-morning_anchor_raw.csv
--> morning_anchor_sau_xu_ly.csv
+2026-04-08/03_noon_raw.csv
+-> 2026-04-08/03_noon_sau_xu_ly.csv
 ```
 
 Ngoài ra còn có file tổng hợp:
@@ -391,7 +391,7 @@ Kết quả sau clean:
 ```text
 không còn missing
 không còn timestamp trùng
-mỗi phiên 2 tiếng có 1440 dòng
+dữ liệu 12 ngày phủ đủ 00:00 đến 24:00 sau khi ghép
 dữ liệu đúng lưới 5 giây
 thiết bị chỉ còn 0 hoặc 1
 ```

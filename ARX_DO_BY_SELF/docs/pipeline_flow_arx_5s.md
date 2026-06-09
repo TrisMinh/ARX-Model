@@ -4,22 +4,28 @@ File này mô tả luồng tổng quát của project từ lúc có raw data đ�
 
 ## 1. Thu thập raw data theo block trong ngày
 
-Dữ liệu raw được tổ chức theo từng ngày. Mỗi ngày có 4 block đại diện:
+Dữ liệu raw được tổ chức theo từng ngày. Mỗi ngày có các block liên tiếp phủ đủ 00:00 đến 24:00:
 
 ```text
+00_midnight_raw.csv
 01_morning_raw.csv
-02_noon_raw.csv
-03_afternoon_raw.csv
-04_night_raw.csv
+02_late_morning_raw.csv
+03_noon_raw.csv
+04_early_afternoon_raw.csv
+05_afternoon_raw.csv
+06_evening_raw.csv
+07_night_raw.csv
+08_late_night_raw.csv
 ```
 
 Ví dụ:
 
 ```text
 data/_01_data/2026-04-08/01_morning_raw.csv
-data/_01_data/2026-04-08/02_noon_raw.csv
-data/_01_data/2026-04-08/03_afternoon_raw.csv
-data/_01_data/2026-04-08/04_night_raw.csv
+data/_01_data/2026-04-08/02_late_morning_raw.csv
+data/_01_data/2026-04-08/03_noon_raw.csv
+...
+data/_01_data/2026-04-08/08_late_night_raw.csv
 ```
 
 Mỗi file raw có 8 cột chính:
@@ -76,7 +82,7 @@ Biết trước clean có bao nhiêu dòng, bao nhiêu missing/lỗi
 Code liên quan:
 
 ```text
-src/data/collection/step_03_pipeline.py
+src/data/collection/step_02_pipeline.py
 ```
 
 Trong `run()`:
@@ -158,9 +164,9 @@ Trước clean: 00_raw_tong_hop.csv
 Sau clean:   00_sau_xu_ly_tong_hop.csv
 ```
 
-## 5. Sinh bộ data train hoàn chỉnh
+## 5. Tạo bộ data train hoàn chỉnh
 
-Từ clean data, pipeline sinh ra data train cuối:
+Pipeline lấy dữ liệu 5 giây hiện tại, tách theo 12 ngày và các block phủ đủ 0h-24h, clean từng file rồi ghép lại thành data train cuối:
 
 ```text
 data/mini_greenhouse_5s_data.csv
@@ -171,39 +177,44 @@ File này là dữ liệu chính để train ARX.
 Code liên quan:
 
 ```text
-src/data/collection/step_02_generate_data.py
-src/data/collection/step_03_pipeline.py
+src/data/collection/step_00_data_io.py
+src/data/collection/step_02_pipeline.py
 ```
 
 Trong `run()`:
 
 ```python
-final_df = build_training_data(cleaned_data, days, seed)
-format_model_data(final_df).to_csv(data_path, index=False)
+cleaned_data = clean_all_data_files(raw_paths, clean_dir)
+format_model_data(cleaned_data).to_csv(data_path, index=False)
 ```
 
-Trong `build_training_data()`:
+Khi chạy với `--raw-dir data`, pipeline tách file hiện tại thành 12 folder:
 
-```python
-source_data = source_data.sort_values("Timestamp").reset_index(drop=True)
-return _build_training_data(source_data, days, seed)
+```text
+data/_01_data/2026-04-08/01_morning_raw.csv
+data/_01_data/2026-04-08/03_noon_raw.csv
+data/_01_data/2026-04-08/05_afternoon_raw.csv
+data/_01_data/2026-04-08/07_night_raw.csv
+...
+data/_01_data/2026-04-19/08_late_night_raw.csv
 ```
 
-Các ý chính khi sinh data train:
+Các ý chính:
 
 | Thành phần | Cách làm |
 |---|---|
-| Nền môi trường | Phân tích median, q10, q90 từ clean data |
-| Temperature/Humidity/Light | Sinh theo chu kỳ ngày đêm và profile đã phân tích |
-| Actuator | Dùng mẫu bật/tắt `Drip`, `Mist`, `Fan` từ data sạch |
-| Soil_Moisture | Sinh phản ứng theo môi trường và thiết bị |
-| Số ngày | Mặc định `--days 12` |
+| Raw theo ngày | Tách từ `mini_greenhouse_5s_data.csv` hiện tại |
+| Raw theo block | `midnight`, `morning`, `late_morning`, `noon`, `early_afternoon`, `afternoon`, `evening`, `night`, `late_night` |
+| Clean | Xử lý timestamp, duplicate, missing |
+| Data cuối | Ghép clean data của 12 ngày đủ 0h-24h |
+| Số dòng | `207360` dòng |
+| Số ngày | `12` ngày |
 | Sampling | 5 giây |
 
 Command build data:
 
 ```bash
-python scripts/01_build_data.py --days 12
+python scripts/01_build_data.py --raw-dir data
 ```
 
 Kết quả chính:
@@ -508,9 +519,12 @@ Raw session data
 ```text
 scripts/01_build_data.py
     -> data.collection.run()
-        -> input_csv_paths()
+        -> build_reference_data_files()
+        -> ghi data/_01_data theo 12 ngày và 9 block/ngày
+        -> ghi data/_01_data/00_raw_tong_hop.csv
         -> clean_all_data_files()
-        -> build_training_data()
+        -> ghi data/_02_clean_data/00_sau_xu_ly_tong_hop.csv
+        -> format_model_data(cleaned_data)
         -> data/mini_greenhouse_5s_data.csv
 
 scripts/02_train.py

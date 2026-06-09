@@ -23,10 +23,15 @@ def require_model_columns(raw: pd.DataFrame, file_name: str) -> None:
         raise ValueError(f"{file_name} {exc}") from exc
 
 
-# Parse Timestamp và sắp xếp theo thời gian.
+# Parse Timestamp, chỉnh offset lệch cả file và sắp xếp theo thời gian.
 def parse_sort_timestamps(raw: pd.DataFrame) -> pd.DataFrame:
     df = normalize_model_columns(raw)
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce").dt.round(f"{SAMPLE_SECONDS}s")
+    timestamp = pd.to_datetime(df["Timestamp"], errors="coerce")
+    valid_timestamp = timestamp.dropna()
+    if not valid_timestamp.empty:
+        offset_seconds = int((valid_timestamp.dt.second % SAMPLE_SECONDS).mode().iloc[0])
+        timestamp = timestamp - pd.to_timedelta(offset_seconds, unit="s")
+    df["Timestamp"] = timestamp.dt.round(f"{SAMPLE_SECONDS}s")
     return df.dropna(subset=["Timestamp"]).sort_values("Timestamp")
 
 
