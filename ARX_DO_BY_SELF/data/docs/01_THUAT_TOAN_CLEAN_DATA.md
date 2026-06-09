@@ -67,6 +67,7 @@ data cảm biến là chuỗi thời gian
 ARX cần đúng thứ tự quá khứ -> hiện tại
 missing data cũng cần nội suy theo trục thời gian
 raw timestamp có thể lệch nhẹ vài giây nên cần round lại trước khi clean
+độ lệch timestamp được rải trong toàn phiên thu, không chỉ vài dòng đầu
 ```
 
 ## 3. Gộp Timestamp Bị Trùng

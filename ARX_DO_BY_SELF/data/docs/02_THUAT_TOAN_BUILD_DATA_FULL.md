@@ -204,7 +204,7 @@ Thuật toán:
 kiểm tra đủ 8 cột bắt buộc
 ghép lại để phân tích profile thực tế
 sinh 4 phiên thu đại diện theo kịch bản lý thuyết
-thêm lỗi raw nhỏ như lệch timestamp, missing, duplicate
+thêm lỗi raw nhỏ như lệch timestamp rải đều toàn phiên, missing, duplicate
 ghi vào data/_01_data/
 ```
 

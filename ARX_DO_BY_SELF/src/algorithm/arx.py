@@ -47,26 +47,22 @@ def build_arx_matrix(df_z: pd.DataFrame, spec: ArxSpec, input_cols: tuple[str, .
 def fit_arx(df_train_z: pd.DataFrame, spec: ArxSpec, input_cols: tuple[str, ...]) -> np.ndarray:
     x_train, y_train = build_arx_matrix(df_train_z, spec, input_cols)
 
-    # Nếu alpha = 0 thì giải least squares thường: min ||X@theta - y||^2.
-    if spec.alpha <= 0.0:
-        theta, _, _, _ = np.linalg.lstsq(x_train, y_train, rcond=None)
-        return theta
-
-    # Nếu alpha > 0 thì dùng ridge: min ||X@theta - y||^2 + alpha*||theta||^2.
+    # Tự dựng công thức normal equation:
+    # Least Squares: theta = (X'X)^-1 X'y
+    # Ridge:         theta = (X'X + alpha*I)^-1 X'y
     penalty = np.eye(x_train.shape[1], dtype=float)
 
     # Không phạt bias vì bias chỉ là độ lệch nền, không phải hệ số động học.
     penalty[-1, -1] = 0.0
 
-    # Nghiệm ridge: theta = (X'X + alpha*I)^-1 X'y.
     lhs = x_train.T @ x_train + spec.alpha * penalty
     rhs = x_train.T @ y_train
+
     try:
         return np.linalg.solve(lhs, rhs)
     except np.linalg.LinAlgError:
-        # Nếu ma trận gần suy biến thì fallback sang least squares để vẫn có nghiệm.
-        theta, _, _, _ = np.linalg.lstsq(lhs, rhs, rcond=None)
-        return theta
+        # Nếu X'X gần suy biến thì dùng pseudo-inverse của chính normal equation.
+        return np.linalg.pinv(lhs) @ rhs
 
 
 # Tính y_hat(t) từ công thức ARX tại đúng một thời điểm.
