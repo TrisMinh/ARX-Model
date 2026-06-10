@@ -21,7 +21,7 @@ def clear_csv_outputs(directory: Path) -> None:
         path.unlink()
 
 
-# Xóa toàn bộ file/folder sinh lại trong thư mục data đầu vào.
+# Xóa file/folder output có thể tái tạo trong thư mục raw đầu vào.
 def clear_data_tree(directory: Path) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     for path in sorted(directory.rglob("*"), key=lambda item: len(item.parts), reverse=True):

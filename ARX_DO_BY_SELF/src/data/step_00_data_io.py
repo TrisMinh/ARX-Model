@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 
-# Các cột raw bắt buộc phải có trong file thu thập.
+# Các cột bắt buộc trong mỗi file dữ liệu thu thập.
 MODEL_COLS: tuple[str, ...] = (
     "Timestamp",
     "Temperature",
@@ -19,7 +19,7 @@ MODEL_COLS: tuple[str, ...] = (
 )
 
 SAMPLE_SECONDS = 5
-
+# Ngưỡng hợp lệ dùng để phát hiện outlier sensor trong bước clean.
 SENSOR_RANGES: dict[str, tuple[float, float]] = {
     "Temperature": (15.0, 45.0),
     "Humidity": (30.0, 100.0),
@@ -30,7 +30,7 @@ SENSOR_RANGES: dict[str, tuple[float, float]] = {
 ACTUATOR_COLS: tuple[str, ...] = ("Drip", "Mist", "Fan")
 
 
-# Làm tròn sensor cho giống dữ liệu đo thực tế.
+# Chuẩn hóa format cột: sensor dạng số làm tròn, actuator về 0/1.
 def format_model_data(df: pd.DataFrame) -> pd.DataFrame:
     out = normalize_model_columns(df)
     for col in SENSOR_RANGES:
@@ -45,23 +45,23 @@ def format_model_data(df: pd.DataFrame) -> pd.DataFrame:
 
 # Lấy thư mục gốc của project ARX_DO_BY_SELF.
 def project_root() -> Path:
-    return Path(__file__).resolve().parents[3]
+    return Path(__file__).resolve().parents[2]
 
 
-# Lấy thư mục chứa data đầu vào.
+# Lấy thư mục chứa các file raw đầu vào.
 def input_data_dir(input_dir: Path | None = None) -> Path:
     if input_dir is None:
         return project_root() / "data" / "_01_data"
     return input_dir if input_dir.is_absolute() else project_root() / input_dir
 
 
-# Lấy danh sách CSV trong thư mục data đầu vào.
+# Lấy danh sách CSV raw, bỏ qua file raw tổng hợp nếu đã có.
 def input_csv_paths(input_dir: Path | None = None) -> list[Path]:
     root = input_data_dir(input_dir)
     return sorted(path for path in root.rglob("*.csv") if path.name != "00_raw_tong_hop.csv")
 
 
-# Kiểm tra và trả về đúng 8 cột raw cần dùng.
+# Kiểm tra đủ cột bắt buộc, bỏ cột thừa và sắp xếp lại đúng thứ tự.
 def normalize_model_columns(df: pd.DataFrame) -> pd.DataFrame:
     missing_cols = [col for col in MODEL_COLS if col not in df.columns]
     if missing_cols:
@@ -69,19 +69,19 @@ def normalize_model_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[:, MODEL_COLS].copy()
 
 
-# Đọc một CSV và kiểm tra đúng 8 cột model cần.
+# Đọc một CSV và kiểm tra đúng format cột.
 def load_model_csv(path: Path) -> pd.DataFrame:
     return normalize_model_columns(pd.read_csv(path))
 
 
-# Đọc data 5s chuẩn đang dùng làm mốc so sánh.
+# Đọc file dữ liệu tổng 5 giây khi cần tách lại theo ngày/phiên.
 def load_reference_data(data_path: Path) -> pd.DataFrame:
     df = load_model_csv(data_path)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
     return df.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True).loc[:, MODEL_COLS]
 
 
-# Tạo tên file data đầu vào.
+# Chuẩn hóa tên file raw khi nhập các CSV rời từ thư mục nguồn.
 def data_output_name(index: int, source_stem: str) -> str:
     safe = "".join(ch if ch.isalnum() or ch in ("_", "-") else "_" for ch in source_stem)
     if safe.endswith("_raw"):
@@ -89,7 +89,7 @@ def data_output_name(index: int, source_stem: str) -> str:
     return f"{index:02d}_{safe}_raw.csv"
 
 
-# Đọc CSV gốc và copy sang thư mục data đầu vào của pipeline.
+# Chuẩn hóa các CSV rời và ghi vào thư mục raw đầu vào của pipeline.
 def build_data_files(output_dir: Path, source_dir: Path | None = None) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
@@ -105,7 +105,7 @@ def build_data_files(output_dir: Path, source_dir: Path | None = None) -> list[P
     return paths
 
 
-# Đọc toàn bộ CSV thật rồi ghép thành một bảng nguồn.
+# Đọc toàn bộ CSV nguồn rồi ghép thành một bảng theo thời gian.
 def load_source_data(source_dir: Path | None = None) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
     for source_path in input_csv_paths(source_dir):
@@ -120,7 +120,7 @@ def load_source_data(source_dir: Path | None = None) -> pd.DataFrame:
     return data.loc[:, MODEL_COLS]
 
 
-# Tách data chuẩn thành các file data đầu vào theo ngày và theo buổi.
+# Tùy chọn: tách file tổng 5 giây thành raw theo ngày và phiên thu.
 def build_reference_data_files(output_dir: Path, data_path: Path) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     source_data = load_reference_data(data_path)
