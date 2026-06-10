@@ -3,7 +3,7 @@
 File code tương ứng:
 
 ```text
-src/data/collection/step_01_clean_data.py
+src/data/step_01_clean_data.py
 ```
 
 Mục tiêu của bước này là chuyển dữ liệu thu được trong:

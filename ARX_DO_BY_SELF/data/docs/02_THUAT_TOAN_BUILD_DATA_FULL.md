@@ -26,14 +26,14 @@ python scripts/01_build_data.py --raw-dir data
 File điều phối chính:
 
 ```text
-src/data/collection/step_02_pipeline.py
+src/data/step_02_pipeline.py
 ```
 
 Các file xử lý chính:
 
 ```text
-src/data/collection/step_00_data_io.py
-src/data/collection/step_01_clean_data.py
+src/data/step_00_data_io.py
+src/data/step_01_clean_data.py
 ```
 
 ## 3. Tách dữ liệu theo ngày và theo buổi
@@ -116,7 +116,7 @@ clean_all_data_files()
 File code:
 
 ```text
-src/data/collection/step_01_clean_data.py
+src/data/step_01_clean_data.py
 ```
 
 Các bước xử lý:

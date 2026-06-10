@@ -9,7 +9,7 @@ import pandas as pd
 
 from algorithm import ArxSpec, default_specs, fit_arx, max_lag, predict_one_step, simulate_chunked, simulate_free_run
 from config import INPUT_COLS, ExperimentConfig
-from data.collection.step_00_data_io import MODEL_COLS, normalize_model_columns
+from data.step_00_data_io import MODEL_COLS, normalize_model_columns
 from evaluation import evaluate_model, fit_metrics
 from preprocessing import add_features, apply_scale, fit_scale_stats, inverse_y, split_time
 from preprocessing.scaling import ScaleStats

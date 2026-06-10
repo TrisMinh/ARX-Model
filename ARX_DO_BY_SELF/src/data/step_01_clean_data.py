@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from data.collection.step_00_data_io import (
+from data.step_00_data_io import (
     ACTUATOR_COLS,
     MODEL_COLS,
     SAMPLE_SECONDS,

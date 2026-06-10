@@ -9,7 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_ROOT))
 
-from data.collection import run  # noqa: E402
+from data import run  # noqa: E402
 
 
 # Đọc tham số build data từ terminal.

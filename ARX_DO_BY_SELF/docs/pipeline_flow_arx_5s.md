@@ -54,7 +54,7 @@ Fan
 Code liên quan:
 
 ```text
-src/data/collection/step_00_data_io.py
+src/data/step_00_data_io.py
 ```
 
 Các hàm chính:
@@ -83,7 +83,7 @@ Biết trước clean có bao nhiêu dòng, bao nhiêu missing/lỗi
 Code liên quan:
 
 ```text
-src/data/collection/step_02_pipeline.py
+src/data/step_02_pipeline.py
 ```
 
 Trong `run()`:
@@ -104,7 +104,7 @@ clean_data_file(path)
 File code:
 
 ```text
-src/data/collection/step_01_clean_data.py
+src/data/step_01_clean_data.py
 ```
 
 Các bước clean:
@@ -179,8 +179,8 @@ File này là dữ liệu chính để train ARX.
 Code liên quan:
 
 ```text
-src/data/collection/step_00_data_io.py
-src/data/collection/step_02_pipeline.py
+src/data/step_00_data_io.py
+src/data/step_02_pipeline.py
 ```
 
 Trong `run()`:
@@ -519,7 +519,7 @@ Raw session data
 
 ```text
 scripts/01_build_data.py
-    -> data.collection.run()
+    -> data.run()
         -> build_reference_data_files()
         -> ghi data/_01_data theo 12 ngày và 9 block/ngày
         -> ghi data/_01_data/00_raw_tong_hop.csv
