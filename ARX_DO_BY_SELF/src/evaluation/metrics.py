@@ -4,6 +4,7 @@ import numpy as np
 
 
 # Tính FIT, RMSE và Bias.
+#fit đo độ bám theo dữ liệu thực tế, RMSE đo độ lệch trung bình giữa dự đoán và thực tế, Bias đo xu hướng dự đoán quá cao hay quá thấp. --- IGNORE ---
 def fit_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
     y_true = np.asarray(y_true, dtype=float)
     y_pred = np.asarray(y_pred, dtype=float)

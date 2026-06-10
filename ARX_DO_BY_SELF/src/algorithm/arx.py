@@ -5,38 +5,28 @@ import pandas as pd
 
 from algorithm.specs import ArxSpec
 
-
-# ARX dùng công thức:
-# y(t) = a1*y(t-1) + ... + ana*y(t-na)
-#      + b1*u1(t-nk) + ... + bnb*u1(t-nk-nb+1)
-#      + ... cho toàn bộ input u
-#      + bias
-
-
 # Tính số dòng đầu tiên chưa dự đoán được vì thiếu dữ liệu quá khứ.
 def max_lag(spec: ArxSpec) -> int:
     # Output cần y(t-na), input cần u(t-nk-nb+1), nên lấy lag lớn nhất.
     return max(spec.na, spec.nb + spec.nk - 1)
 
-
-# Tạo X và y cho bài toán tuyến tính: y = X @ theta.
+# Tạo ma trận X và vecto Y
 def build_arx_matrix(df_z: pd.DataFrame, spec: ArxSpec, input_cols: tuple[str, ...]) -> tuple[np.ndarray, np.ndarray]:
-    # y là Soil_Moisture đã chuẩn hóa.
     y = df_z["Soil_Moisture"].to_numpy(dtype=float)
     lag = max_lag(spec)
     cols: list[np.ndarray] = []
 
-    # Nhóm hệ số a: lấy các output quá khứ y(t-1), y(t-2), ..., y(t-na).
+    # output quá khứ
     for y_lag in range(1, spec.na + 1):
         cols.append(y[lag - y_lag : len(y) - y_lag])
 
-    # Nhóm hệ số b: với mỗi input, lấy u(t-nk), u(t-nk-1), ..., đủ nb mẫu.
+    # cột input
     for col in input_cols:
         values = df_z[col].to_numpy(dtype=float)
         for u_lag in range(spec.nk, spec.nk + spec.nb):
             cols.append(values[lag - u_lag : len(values) - u_lag])
 
-    # Cột 1 cuối cùng là bias để model tự học độ lệch nền.
+    # bias
     cols.append(np.ones(len(y) - lag))
 
     # X có dạng [y_lag, input_lag, bias], target là y(t) từ sau đoạn lag.
@@ -47,7 +37,6 @@ def build_arx_matrix(df_z: pd.DataFrame, spec: ArxSpec, input_cols: tuple[str, .
 def fit_arx(df_train_z: pd.DataFrame, spec: ArxSpec, input_cols: tuple[str, ...]) -> np.ndarray:
     x_train, y_train = build_arx_matrix(df_train_z, spec, input_cols)
 
-    # Tự dựng công thức normal equation:
     # Least Squares: theta = (X'X)^-1 X'y
     # Ridge:         theta = (X'X + alpha*I)^-1 X'y
     penalty = np.eye(x_train.shape[1], dtype=float)
@@ -61,7 +50,6 @@ def fit_arx(df_train_z: pd.DataFrame, spec: ArxSpec, input_cols: tuple[str, ...]
     try:
         return np.linalg.solve(lhs, rhs)
     except np.linalg.LinAlgError:
-        # Nếu X'X gần suy biến thì dùng pseudo-inverse của chính normal equation.
         return np.linalg.pinv(lhs) @ rhs
 
 
