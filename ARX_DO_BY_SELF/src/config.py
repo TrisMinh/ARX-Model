@@ -28,15 +28,24 @@ class ExperimentConfig:
     sampling_seconds: int = 5
     train_ratio: float = 0.70
     val_ratio: float = 0.15
-    split_strategy: str = "same_clock_by_day"
+    split_strategy: str = "day_ratio"
     eval_time_blocks: tuple[tuple[float, float], ...] = (
-        (6.0, 22.0),
+        (0.0, 24.0),
     )
     five_minute_seconds: int = 300
     control_horizon_seconds: int = 1200
     soil_low_sp: float = 55.0
     soil_high_sp: float = 65.0
     soil_clip_margin: float = 10.0
+    selected_model_name: str = "ARX_na96_nb16_nk2_alpha10"
+    report_model_names: tuple[str, ...] = (
+        "ARX_na96_nb16_nk2_alpha10",
+        "ARX_na24_nb4_nk2_alpha10",
+        "ARX_na8_nb1_nk1_alpha1",
+        "ARX_na8_nb2_nk1_alpha1",
+        "ARX_na8_nb4_nk8_alpha100",
+        "ARX_na8_nb4_nk12_alpha1",
+    )
 
     #đổi từ thời gian sang số bước
     # Số bước tương ứng 5 phút.

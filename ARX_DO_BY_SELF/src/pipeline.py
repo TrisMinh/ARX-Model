@@ -70,6 +70,29 @@ def _train_candidates(
     return leaderboard, fitted
 
 
+# Tạo bảng rút gọn dùng trong báo cáo, vẫn giữ rank validation thật.
+def _leaderboard_for_report(
+    leaderboard: pd.DataFrame,
+    selected_name: str,
+    report_model_names: tuple[str, ...],
+) -> pd.DataFrame:
+    ranked = leaderboard.copy().reset_index(drop=True)
+    ranked.insert(0, "validation_rank", np.arange(1, len(ranked) + 1))
+
+    report_names = tuple(dict.fromkeys((selected_name, *report_model_names)))
+    report = ranked.loc[ranked["model"].isin(report_names)].copy()
+    if len(report) <= 1:
+        report = ranked.copy()
+
+    selected_row = report.loc[report["model"] == selected_name]
+    other_rows = report.loc[report["model"] != selected_name].sort_values("val_FIT_free_run", ascending=False)
+    report = pd.concat([selected_row, other_rows], ignore_index=True)
+    report.insert(0, "report_order", np.arange(1, len(report) + 1))
+    selected_fit = float(ranked.loc[ranked["model"] == selected_name, "val_FIT_free_run"].iloc[0])
+    report["delta_vs_selected_FIT"] = report["val_FIT_free_run"] - selected_fit
+    return report
+
+
 # Tạo file dự đoán trên test.
 def _build_predictions(
     test: pd.DataFrame,
@@ -176,8 +199,13 @@ def run_pipeline(project_root: Path, cfg: ExperimentConfig, grid: str) -> dict[s
     clip = _physical_clip(stats, cfg)
 
     leaderboard, fitted = _train_candidates(train_z, val_z, stats, clip, cfg, grid)
-    selected = leaderboard.iloc[0].to_dict()
-    spec, theta = fitted[str(selected["model"])]
+    selected_name = cfg.selected_model_name
+    if selected_name not in fitted:
+        available = ", ".join(fitted)
+        raise ValueError(f"selected_model_name={selected_name!r} is not in grid {grid!r}. Available: {available}")
+    leaderboard_report = _leaderboard_for_report(leaderboard, selected_name, cfg.report_model_names)
+    selected = leaderboard.loc[leaderboard["model"] == selected_name].iloc[0].to_dict()
+    spec, theta = fitted[selected_name]
 
     print(f"[ARX] selected {spec.name}", flush=True)
     train_eval = evaluate_model(train_z, theta, spec, INPUT_COLS, stats, clip, cfg)
@@ -199,7 +227,7 @@ def run_pipeline(project_root: Path, cfg: ExperimentConfig, grid: str) -> dict[s
             "n_input_cols": len(INPUT_COLS),
             "n_params": int(len(theta)),
             "input_cols": list(INPUT_COLS),
-            "split": "train/validation/test use the same time blocks on different days",
+            "split": "train/validation/test split by whole days, approximately 70/15/15",
             "time_blocks": [list(block) for block in cfg.eval_time_blocks],
             "horizons_seconds": {
                 "one_step": cfg.sampling_seconds,
@@ -214,6 +242,7 @@ def run_pipeline(project_root: Path, cfg: ExperimentConfig, grid: str) -> dict[s
 
     raw.loc[:, MODEL_COLS].to_csv(data_path, index=False)
     leaderboard.to_csv(results_dir / "leaderboard.csv", index=False)
+    leaderboard_report.to_csv(results_dir / "leaderboard_report.csv", index=False)
     predictions.to_csv(results_dir / "test_predictions.csv", index=False)
     write_json(results_dir / "metrics.json", payload)
     write_json(results_dir / "arx_5s_model.json", _runtime_artifact(cfg, spec, theta, stats, clip))

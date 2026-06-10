@@ -9,34 +9,29 @@ from config import ExperimentConfig
 ScaleStats = dict[str, tuple[float, float]]
 
 
-# Đánh dấu các dòng nằm trong những block giờ được chọn.
-def in_time_blocks(timestamp: pd.Series, blocks: tuple[tuple[float, float], ...]) -> pd.Series:
-    time_of_day = timestamp - timestamp.dt.normalize()
-    mask = pd.Series(False, index=timestamp.index)
-
-    for start_hour, end_hour in blocks:
-        start = pd.to_timedelta(start_hour, unit="h")
-        end = pd.to_timedelta(end_hour, unit="h")
-        mask = mask | ((time_of_day >= start) & (time_of_day < end))
-
-    return mask
-
-
 # Chia train, validation, test theo thời gian.
 def split_time(df: pd.DataFrame, cfg: ExperimentConfig) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    if getattr(cfg, "split_strategy", "ratio") == "same_clock_by_day":
+    if getattr(cfg, "split_strategy", "ratio") == "day_ratio":
         sorted_df = df.sort_values("Timestamp").reset_index(drop=True)
         timestamp = pd.to_datetime(sorted_df["Timestamp"])
         days = sorted(timestamp.dt.normalize().dropna().unique())
         if len(days) >= 3:
-            val_day = pd.Timestamp(days[-2])
-            test_day = pd.Timestamp(days[-1])
-            blocks = getattr(cfg, "eval_time_blocks", ((0.0, 24.0),))
-            selected_hours = in_time_blocks(timestamp, blocks)
+            n_days = len(days)
+            n_train = max(1, int(round(n_days * cfg.train_ratio)))
+            n_val = max(1, int(round(n_days * cfg.val_ratio)))
+            if n_train + n_val >= n_days:
+                n_val = max(1, n_days - n_train - 1)
+            if n_train + n_val >= n_days:
+                n_train = max(1, n_days - n_val - 1)
 
-            train = sorted_df[(timestamp < val_day) & selected_hours]
-            val = sorted_df[(timestamp >= val_day) & (timestamp < test_day) & selected_hours]
-            test = sorted_df[(timestamp >= test_day) & selected_hours]
+            train_days = days[:n_train]
+            val_days = days[n_train : n_train + n_val]
+            test_days = days[n_train + n_val :]
+            day_key = timestamp.dt.normalize()
+
+            train = sorted_df[day_key.isin(train_days)]
+            val = sorted_df[day_key.isin(val_days)]
+            test = sorted_df[day_key.isin(test_days)]
             if len(train) > 0 and len(val) > 0 and len(test) > 0:
                 return (
                     train.reset_index(drop=True),

@@ -21,6 +21,7 @@ Dữ liệu raw được tổ chức theo từng ngày. Mỗi ngày có các blo
 Ví dụ:
 
 ```text
+data/_01_data/2026-04-08/00_midnight_raw.csv
 data/_01_data/2026-04-08/01_morning_raw.csv
 data/_01_data/2026-04-08/02_late_morning_raw.csv
 data/_01_data/2026-04-08/03_noon_raw.csv
@@ -129,6 +130,7 @@ data/_02_clean_data/<ngày>/<phiên>_sau_xu_ly.csv
 Ví dụ:
 
 ```text
+data/_02_clean_data/2026-04-08/00_midnight_sau_xu_ly.csv
 data/_02_clean_data/2026-04-08/01_morning_sau_xu_ly.csv
 ```
 
@@ -191,6 +193,7 @@ format_model_data(cleaned_data).to_csv(data_path, index=False)
 Khi chạy với `--raw-dir data`, pipeline tách file hiện tại thành 12 folder:
 
 ```text
+data/_01_data/2026-04-08/00_midnight_raw.csv
 data/_01_data/2026-04-08/01_morning_raw.csv
 data/_01_data/2026-04-08/03_noon_raw.csv
 data/_01_data/2026-04-08/05_afternoon_raw.csv
@@ -275,30 +278,32 @@ split_time(df, cfg)
 Chiến lược hiện tại:
 
 ```text
-same_clock_by_day
+day_ratio
 ```
 
 Nghĩa là:
 
 ```text
-Train:      các ngày trước
-Validation: ngày kế cuối
-Test:       ngày cuối
-```
-
-Chỉ lấy cùng khung giờ:
-
-```text
-6:00-22:00
+Train:      8 ngày đầu
+Validation: 2 ngày tiếp theo
+Test:       2 ngày cuối
 ```
 
 Với chu kỳ 5 giây:
 
 ```text
-1 ngày trong 6:00-22:00 = 16 giờ * 3600 / 5 = 11520 mẫu
+1 ngày = 24 giờ * 3600 / 5 = 17280 mẫu
 ```
 
-Vì vậy validation và test có số dòng bằng nhau nếu mỗi tập là 1 ngày.
+Với 12 ngày dữ liệu:
+
+```text
+Train:      8 ngày = 138240 mẫu
+Validation: 2 ngày = 34560 mẫu
+Test:       2 ngày = 34560 mẫu
+```
+
+Tỷ lệ thực tế theo ngày nguyên là 66.67/16.67/16.67, gần với mục tiêu 70/15/15 và không cắt ngang ngày.
 
 ## 8. Fit scale trên train và chuẩn hóa dữ liệu
 
@@ -331,7 +336,7 @@ Lưu ý:
 Mean/std chỉ fit trên train để tránh rò rỉ thông tin từ validation/test.
 ```
 
-## 9. Tạo danh sách ứng viên ARX
+## 9. Search cấu hình ARX
 
 Code:
 
@@ -354,12 +359,6 @@ Mỗi cấu hình gồm:
 | `nk` | Độ trễ input |
 | `alpha` | Hệ số Ridge |
 
-Ví dụ model được chọn:
-
-```text
-ARX_na96_nb16_nk2_alpha10
-```
-
 Nghĩa là:
 
 ```text
@@ -369,7 +368,13 @@ nk = 2
 alpha = 10
 ```
 
-## 10. Fit từng ứng viên ARX
+Pipeline vẫn search nhiều cấu hình và ghi vào `leaderboard.csv`. Model cuối được chốt dùng trong báo cáo là:
+
+```text
+ARX_na96_nb16_nk2_alpha10
+```
+
+## 10. Fit từng cấu hình ARX
 
 Code:
 
@@ -409,9 +414,9 @@ Kết quả của bước này:
 theta = vector hệ số ARX
 ```
 
-## 11. Chọn model bằng validation free-run
+## 11. Chọn model sau search
 
-Với mỗi ứng viên, pipeline đánh giá trên validation.
+Sau khi fit từng cấu hình, pipeline đánh giá trên validation.
 
 Code:
 
@@ -424,15 +429,10 @@ Sau đó ghi vào leaderboard:
 
 ```text
 result/leaderboard.csv
+result/leaderboard_report.csv
 ```
 
-Tiêu chí chọn:
-
-```text
-Validation FIT free-run cao nhất
-```
-
-Vì free-run khó hơn 1-step: model phải dùng lại dự đoán của chính nó làm quá khứ.
+`leaderboard.csv` là bảng xếp hạng thật theo validation free-run. `leaderboard_report.csv` đặt model chốt `ARX(96,16,2)` lên đầu để đưa vào báo cáo, các dòng sau là vài cấu hình đối chứng có bộ nhớ quá khứ ngắn hơn hoặc độ trễ khác. Bảng này vẫn giữ `validation_rank` và thêm `delta_vs_selected_FIT` để thấy chênh lệch so với model chốt. Free-run khó hơn 1-step vì model phải dùng lại dự đoán của chính nó làm quá khứ.
 
 ## 12. Đánh giá model cuối
 
@@ -468,11 +468,12 @@ Metric:
 
 ## 13. Ghi artifact kết quả
 
-Sau khi chọn model, pipeline ghi các file:
+Sau khi train model, pipeline ghi các file:
 
 | File | Nội dung |
 |---|---|
-| `result/leaderboard.csv` | Bảng so sánh các ứng viên |
+| `result/leaderboard.csv` | Bảng so sánh các cấu hình search |
+| `result/leaderboard_report.csv` | Bảng rút gọn cho báo cáo, có chênh lệch FIT |
 | `result/metrics.json` | Metric train/validation/test |
 | `result/arx_5s_model.json` | Model artifact để chạy lại |
 | `result/test_predictions.csv` | Dự đoán trên tập test |
@@ -507,9 +508,9 @@ Raw session data
 -> add_features
 -> split train/validation/test
 -> scale bằng train
--> thử nhiều ARX spec
+-> search nhiều cấu hình ARX
 -> fit theta tự viết bằng normal equation
--> chọn model theo validation free-run
+-> chốt ARX(96,16,2), alpha=10
 -> đánh giá train/validation/test
 -> lưu leaderboard, metrics, model artifact, predictions
 ```

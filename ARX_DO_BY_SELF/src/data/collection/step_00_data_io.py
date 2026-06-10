@@ -58,7 +58,7 @@ def input_data_dir(input_dir: Path | None = None) -> Path:
 # Lấy danh sách CSV trong thư mục data đầu vào.
 def input_csv_paths(input_dir: Path | None = None) -> list[Path]:
     root = input_data_dir(input_dir)
-    return sorted(path for path in root.rglob("*.csv") if not path.name.startswith("00_"))
+    return sorted(path for path in root.rglob("*.csv") if path.name != "00_raw_tong_hop.csv")
 
 
 # Kiểm tra và trả về đúng 8 cột raw cần dùng.
@@ -79,78 +79,6 @@ def load_reference_data(data_path: Path) -> pd.DataFrame:
     df = load_model_csv(data_path)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
     return df.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True).loc[:, MODEL_COLS]
-
-
-# Thêm lỗi nhỏ giống quá trình thu data để bước clean có ý nghĩa.
-def inject_collection_artifacts(df: pd.DataFrame, data_name: str) -> pd.DataFrame:
-    out = df.copy()
-    n_rows = len(out)
-    if n_rows == 0:
-        return out.loc[:, MODEL_COLS]
-
-    def spread_indices(count: int, low_frac: float, high_frac: float) -> list[int]:
-        if count <= 0:
-            return []
-        if n_rows == 1:
-            return [0]
-        low = int(round((n_rows - 1) * low_frac))
-        high = int(round((n_rows - 1) * high_frac))
-        return sorted({int(idx) for idx in np.linspace(low, high, count).round().clip(0, n_rows - 1)})
-
-    try:
-        block_id = int(data_name.split("_", 1)[0])
-    except ValueError:
-        block_id = 0
-
-    timestamp_offset = (1, 2, 3, 4, 1, 2, 3, 4, 1)[block_id % 9]
-    out["Timestamp"] = pd.to_datetime(out["Timestamp"]) + pd.Timedelta(
-        seconds=timestamp_offset
-    )
-
-    first_ts = pd.to_datetime(out["Timestamp"].iloc[0])
-
-    def add_missing_points(points: list[tuple[float, str]]) -> None:
-        for frac, col in points:
-            idx = spread_indices(1, frac, frac)[0]
-            out.loc[out.index[idx], col] = np.nan
-
-    def add_missing_span(frac: float, length: int, cols: tuple[str, ...]) -> None:
-        start = spread_indices(1, frac, frac)[0]
-        end = min(start + length, n_rows)
-        if start < end:
-            out.loc[out.index[start:end], list(cols)] = np.nan
-
-    missing_profile = (first_ts.day + block_id * 5) % 12
-    if missing_profile == 1:
-        add_missing_points([(0.18, "Temperature")])
-    elif missing_profile == 2:
-        add_missing_points([(0.22, "Humidity"), (0.74, "Light")])
-    elif missing_profile == 3:
-        add_missing_points([(0.16, "Temperature"), (0.48, "Humidity"), (0.82, "Light")])
-    elif missing_profile == 4:
-        add_missing_span(0.35, 3, ("Light",))
-    elif missing_profile == 5:
-        add_missing_span(0.42, 3, ("Temperature", "Humidity"))
-    elif missing_profile == 6:
-        add_missing_points([(0.30, "Fan"), (0.63, "Mist")])
-    elif missing_profile == 7:
-        add_missing_span(0.56, 4, ("Soil_Moisture",))
-        add_missing_points([(0.78, "Light")])
-    elif missing_profile == 9:
-        add_missing_span(0.50, 2, ("Humidity",))
-        add_missing_points([(0.84, "Temperature")])
-    elif missing_profile == 10:
-        add_missing_points([(0.46, "Soil_Moisture"), (0.70, "Drip")])
-    elif missing_profile == 11:
-        add_missing_span(0.24, 4, ("Temperature", "Humidity"))
-
-    duplicate_profile = (first_ts.day * 3 + block_id) % 11
-    duplicate_count = 2 if duplicate_profile == 7 else 1 if duplicate_profile in (0, 4, 9) else 0
-    for dup_no in range(duplicate_count):
-        duplicate_idx = spread_indices(1, 0.28 + 0.22 * dup_no, 0.28 + 0.22 * dup_no)[0]
-        duplicate = out.iloc[[duplicate_idx]].copy()
-        out = pd.concat([out.iloc[: duplicate_idx + 1], duplicate, out.iloc[duplicate_idx + 1 :]], ignore_index=True)
-    return out.loc[:, MODEL_COLS]
 
 
 # Tạo tên file data đầu vào.
@@ -198,15 +126,15 @@ def build_reference_data_files(output_dir: Path, data_path: Path) -> list[Path]:
     source_data = load_reference_data(data_path)
     paths: list[Path] = []
     windows = (
-        ("00_midnight_raw.csv", "00_midnight", 0.0, 7.0),
-        ("01_morning_raw.csv", "01_morning", 7.0, 9.0),
-        ("02_late_morning_raw.csv", "02_late_morning", 9.0, 11.5),
-        ("03_noon_raw.csv", "03_noon", 11.5, 13.5),
-        ("04_early_afternoon_raw.csv", "04_early_afternoon", 13.5, 15.0),
-        ("05_afternoon_raw.csv", "05_afternoon", 15.0, 17.0),
-        ("06_evening_raw.csv", "06_evening", 17.0, 20.0),
-        ("07_night_raw.csv", "07_night", 20.0, 22.0),
-        ("08_late_night_raw.csv", "08_late_night", 22.0, 24.0),
+        ("00_midnight_raw.csv", 0.0, 7.0),
+        ("01_morning_raw.csv", 7.0, 9.0),
+        ("02_late_morning_raw.csv", 9.0, 11.5),
+        ("03_noon_raw.csv", 11.5, 13.5),
+        ("04_early_afternoon_raw.csv", 13.5, 15.0),
+        ("05_afternoon_raw.csv", 15.0, 17.0),
+        ("06_evening_raw.csv", 17.0, 20.0),
+        ("07_night_raw.csv", 20.0, 22.0),
+        ("08_late_night_raw.csv", 22.0, 24.0),
     )
 
     for day, day_df in source_data.groupby(source_data["Timestamp"].dt.strftime("%Y-%m-%d"), sort=True):
@@ -215,14 +143,13 @@ def build_reference_data_files(output_dir: Path, data_path: Path) -> list[Path]:
         timestamp = pd.to_datetime(day_df["Timestamp"])
         day_start = pd.Timestamp(day)
 
-        for file_name, artifact_name, start_hour, end_hour in windows:
+        for file_name, start_hour, end_hour in windows:
             start = day_start + pd.to_timedelta(start_hour, unit="h")
             end = day_start + pd.to_timedelta(end_hour, unit="h")
             session = day_df[(timestamp >= start) & (timestamp < end)].reset_index(drop=True)
             if session.empty:
                 continue
             path = day_dir / file_name
-            raw_session = inject_collection_artifacts(session, artifact_name)
-            format_model_data(raw_session).to_csv(path, index=False)
+            format_model_data(session).to_csv(path, index=False)
             paths.append(path)
     return paths

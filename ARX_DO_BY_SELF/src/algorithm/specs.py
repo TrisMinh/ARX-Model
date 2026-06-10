@@ -42,6 +42,11 @@ def default_specs(grid: str) -> list[ArxSpec]:
     if grid != "quick":
         raise ValueError("grid must be one of: tiny, quick, wide")
     return [
+        ArxSpec(na=8, nb=1, nk=1, alpha=1.0),
+        ArxSpec(na=8, nb=2, nk=1, alpha=1.0),
+        ArxSpec(na=8, nb=4, nk=8, alpha=100.0),
+        ArxSpec(na=8, nb=4, nk=12, alpha=1.0),
+        ArxSpec(na=24, nb=4, nk=2, alpha=10.0),
         ArxSpec(na=72, nb=8, nk=4, alpha=10.0),
         ArxSpec(na=72, nb=12, nk=4, alpha=10.0),
         ArxSpec(na=96, nb=12, nk=4, alpha=10.0),
